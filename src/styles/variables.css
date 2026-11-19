@@ -1,0 +1,43 @@
+/* Low-fidelity tokens taken from the Figma wireframe (grayscale). Swap in brand colors for high fidelity. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: light;
+
+  /* Fonts */
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 34px;
+  --text-hero: 64px;
+
+  /* Colors */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --panel: #d9d9d9;           /* big gray workspace and sidebar */
+  --row: #f3f3f3;             /* table rows, item cards, small boxes */
+  --placeholder: #e4e4e4;     /* image placeholder fill */
+  --placeholder-line: #a3a3a3;
+  --border: #8a8a8a;          /* inputs, buttons, cards */
+  --row-line: #3f3f46;        /* lines between table rows */
+  --ink: #111827;             /* headings, numbers */
+  --text: #18181b;
+  --muted: #52525b;           /* subtitles, captions */
+
+  /* Status dots */
+  --info: #2563eb;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --neutral: #18181b;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 24px;
+  --gap: 16px;
+  --sidebar-width: 280px;
+}
