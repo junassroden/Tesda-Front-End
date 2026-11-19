@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.jsx'
-import Button from '../../../components/Button/Button.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
+import Workspace from '../../../components/Workspace/Workspace.jsx'
+import { ADMIN_SUBTITLE } from '../../../constants/navItems.js'
 import { ROUTES } from '../../../constants/routes.js'
-import { documentService } from '../../../services/documentService.js'
 import { toList } from '../../../services/api.js'
+import { documentService } from '../../../services/documentService.js'
 
 // Figma: Document Page15
 export default function DocumentDetailPage() {
@@ -20,26 +20,37 @@ export default function DocumentDetailPage() {
       .catch(() => setDocument(false))
   }, [id])
 
-  const name = document?.original_name ?? `Document #${id}`
+  const share = () => navigator.clipboard?.writeText(window.location.href)
+
+  const actions = (
+    <>
+      <button type="button" className="icon-btn" onClick={share} aria-label="Copy link">
+        ⤴
+      </button>
+      <a className="icon-btn" href={documentService.downloadUrl(id)} aria-label="Download">
+        ⋮
+      </a>
+    </>
+  )
 
   return (
     <>
-      <Breadcrumb items={[{ label: 'Documents', to: ROUTES.ADMIN.DOCUMENTS }, { label: name }]} />
-      <PageHeader title={name} actions={<Button onClick={() => window.open(documentService.downloadUrl(id))}>Download</Button>} />
-      {document === null && <p>Loading…</p>}
-      {document === false && <p>This document was not found.</p>}
-      {document && (
-        <section className="panel">
-          <h2>Description</h2>
-          <dl className="details">
-            <dt>Type</dt>
-            <dd>{document.image_label || '—'}</dd>
-            <dt>Category</dt>
-            <dd>{document.text_label || '—'}</dd>
-          </dl>
-          {document.ocr_text && <pre className="ocr-text">{document.ocr_text}</pre>}
-        </section>
-      )}
+      <PageHeader title="Documents overview" subtitle={ADMIN_SUBTITLE} />
+      <Workspace back={ROUTES.ADMIN.DOCUMENTS} actions={actions} flush>
+        <div className="detail-head">
+          <div>
+            <h2>{document ? document.original_name : document === false ? 'Document not found' : 'Loading…'}</h2>
+            <p>{document ? [document.image_label, document.text_label].filter(Boolean).join(' · ') || 'No description yet.' : ''}</p>
+          </div>
+        </div>
+        {document?.ocr_text ? (
+          <pre className="doc-preview card" style={{ whiteSpace: 'pre-wrap', overflow: 'auto' }}>
+            {document.ocr_text}
+          </pre>
+        ) : (
+          <div className="ph doc-preview" role="img" aria-label="Document preview placeholder" />
+        )}
+      </Workspace>
     </>
   )
 }

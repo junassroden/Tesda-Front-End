@@ -5,6 +5,8 @@ import DataTable from '../../../components/DataTable/DataTable.jsx'
 import StatusBadge from '../../../components/DataTable/StatusBadge.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Pagination from '../../../components/Pagination/Pagination.jsx'
+import Workspace from '../../../components/Workspace/Workspace.jsx'
+import { LEARNING_CENTER_SUBTITLE } from '../../../constants/navItems.js'
 import { ROUTES, toPath } from '../../../constants/routes.js'
 import { usePagination } from '../../../hooks/usePagination.js'
 import { toList } from '../../../services/api.js'
@@ -12,11 +14,10 @@ import { programService } from '../../../services/programService.js'
 import { exportReport } from '../../../utils/exportReport.js'
 
 const COLUMNS = [
-  { key: 'course_code', label: 'Code' },
-  { key: 'course_name', label: 'Program' },
-  { key: 'qualification', label: 'Qualification' },
-  { key: 'capacity', label: 'Capacity' },
-  { key: 'status', label: 'Status', render: (r) => (r.status ? <StatusBadge status={r.status} /> : '—') },
+  { key: 'course_code', label: 'Program Code' },
+  { key: 'course_name', label: 'Program Name' },
+  { key: 'batch_count', label: 'Batch Count', render: (p) => `Batch ${String(p.batch_count ?? 0).padStart(2, '0')}` },
+  { key: 'status', label: 'Status', render: (p) => <StatusBadge status={p.status} /> },
 ]
 
 // Figma: Student List 3
@@ -33,22 +34,31 @@ export default function ProgramListPage() {
       .catch((err) => setError(err.message))
   }, [])
 
-  const filtered = programs.filter((p) => String(p.course_name ?? '').toLowerCase().includes(search.toLowerCase()))
-  const { rows, page, pageCount, setPage } = usePagination(filtered)
+  const filtered = programs.filter((p) => `${p.course_code ?? ''} ${p.course_name ?? ''}`.toLowerCase().includes(search.toLowerCase()))
+  const { rows, page, pageCount, setPage } = usePagination(filtered, 10)
 
   return (
     <>
       <PageHeader
-        title="Programs"
-        subtitle="Programs offered by this learning center"
+        title="Program Lists"
+        subtitle={LEARNING_CENTER_SUBTITLE}
         search={search}
         onSearch={setSearch}
-        actions={<Button to={ROUTES.CENTER.REGISTER_PROGRAM}>Register program</Button>}
-        onExport={(format) => exportReport(format, { title: 'List of Programs', columns: COLUMNS.slice(0, 4), rows: filtered })}
+        onExport={(format) => exportReport(format, { title: 'List of Programs', columns: COLUMNS.slice(0, 2), rows: filtered })}
       />
-      {error && <p className="form-error">{error}</p>}
-      <DataTable title="List of Programs" columns={COLUMNS} rows={rows} onRowClick={(p) => navigate(toPath(ROUTES.CENTER.BATCHES, { programId: p.id }))} />
-      <Pagination page={page} pageCount={pageCount} onChange={setPage} />
+      <Workspace
+        title="List of Programs"
+        actions={
+          <Button className="btn-lg" to={ROUTES.CENTER.REGISTER_PROGRAM}>
+            Add Program
+          </Button>
+        }
+        flush
+      >
+        {error && <p className="form-error" style={{ margin: '0 16px 12px' }}>{error}</p>}
+        <DataTable columns={COLUMNS} rows={rows} emptyText="No programs yet. Use “Add Program” to register one." onRowClick={(p) => navigate(toPath(ROUTES.CENTER.BATCHES, { programId: p.id }))} />
+        <Pagination page={page} pageCount={pageCount} onChange={setPage} />
+      </Workspace>
     </>
   )
 }

@@ -19,7 +19,7 @@ export default function Workspace({ title, description, back, actions, sample = 
               </Link>
             )}
             {title && <h2>{title}</h2>}
-            {description && <p>{description}</p>}
+            {description && <div className="workspace-desc">{description}</div>}
           </div>
           {(actions || sample) && (
             <div className="workspace-actions">
