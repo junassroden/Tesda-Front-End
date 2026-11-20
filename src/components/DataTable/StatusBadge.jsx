@@ -1,24 +1,39 @@
-// Status text -> dot color. Anything not listed is neutral.
+// Status -> color tone. Anything not listed is neutral.
 const TONES = {
-  'in review': 'info',
+  in_review: 'info',
+  budget_check: 'info',
+  for_approval: 'info',
   current: 'success',
   pending: 'warning',
   expiring: 'warning',
+  upcoming: 'warning',
   incomplete: 'danger',
   rejected: 'danger',
+  cancelled: 'danger',
+  dropped: 'danger',
   approved: 'success',
+  released: 'success',
+  received: 'success',
   active: 'success',
+  ongoing: 'success',
+  open: 'success',
   complete: 'success',
-  completed: 'success',
-  delivered: 'success',
+  completed: 'neutral',
+  closed: 'neutral',
+  archived: 'neutral',
 }
 
-/**
- * "• Pending" style status (table rows).
- * variant="pill" draws the boxed badge used in dashboard lists.
- */
-export default function StatusBadge({ status, variant = 'dot' }) {
-  if (!status) return '—'
-  const tone = TONES[String(status).toLowerCase()] ?? 'neutral'
-  return <span className={`status-badge status-${tone}${variant === 'pill' ? ' status-pill' : ''}`}>{status}</span>
+const keyOf = (status) => String(status).trim().toLowerCase().replace(/[\s-]+/g, '_')
+
+/** "in_review" -> "In review" */
+const labelOf = (status) => {
+  const text = String(status).replace(/_/g, ' ').trim()
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+}
+
+/** Tinted status badge with a dot. */
+export default function StatusBadge({ status }) {
+  if (!status) return <span className="muted">—</span>
+  const tone = TONES[keyOf(status)] ?? 'neutral'
+  return <span className={`status-badge status-${tone}`}>{labelOf(status)}</span>
 }
