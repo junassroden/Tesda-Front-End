@@ -1,7 +1,18 @@
-/** Inventory card: image (or placeholder), name, description, quantity "00", and a ⋮ menu button. */
-export default function ItemCard({ image, name, quantity, description, onClick, onMenu }) {
+import Icon from '../Icon/Icon.jsx'
+
+const initials = (name = '') =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('') || '—'
+
+/** Inventory card: photo (or a branded initials tile), name, description, quantity on hand. */
+export default function ItemCard({ image, name, quantity, unit = 'in stock', description, lowAt = 5, onClick, onMenu }) {
   const Tag = onClick ? 'button' : 'article'
-  const qty = String(quantity ?? 0).padStart(2, '0')
+  const qty = Number(quantity ?? 0)
+
   return (
     <Tag type={onClick ? 'button' : undefined} className="item-card" onClick={onClick}>
       {onMenu && (
@@ -22,17 +33,33 @@ export default function ItemCard({ image, name, quantity, description, onClick, 
             }
           }}
         >
-          ⋮
+          <Icon name="more" size={18} />
         </span>
       )}
-      <div className={image ? 'item-card-image' : 'item-card-image ph'}>{image && <img src={image} alt="" />}</div>
+      <div className={image ? 'item-card-image' : 'item-card-image is-empty'}>{image ? <img src={image} alt={name} /> : <span aria-hidden="true">{initials(name)}</span>}</div>
       <div className="item-card-body">
         <div>
-          <h3>{name || 'Item name'}</h3>
-          <p>{description || 'Item description'}</p>
+          <h3>{name || 'Unnamed item'}</h3>
+          <p>{description || 'No description yet.'}</p>
         </div>
-        <span className="item-card-qty">{qty}</span>
+        <div className={qty <= lowAt ? 'item-card-qty low' : 'item-card-qty'}>
+          <strong>{qty}</strong>
+          <span>{qty <= lowAt ? 'low stock' : unit}</span>
+        </div>
       </div>
     </Tag>
+  )
+}
+
+/** Placeholder card shown while items load. */
+export function ItemCardSkeleton() {
+  return (
+    <div className="item-skeleton" aria-hidden="true">
+      <span className="skeleton" />
+      <div>
+        <span className="skeleton skeleton-line" style={{ width: '70%' }} />
+        <span className="skeleton skeleton-line" style={{ width: '45%' }} />
+      </div>
+    </div>
   )
 }
