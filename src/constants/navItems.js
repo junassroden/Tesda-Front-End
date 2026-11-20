@@ -1,21 +1,23 @@
 import { ROUTES } from './routes.js'
 
-// Sidebar buttons for each role (labels as in Figma). `exact` means active only on that exact path.
+// Sidebar links for each role, grouped. `exact` = active only on that exact path.
+// `icon` is a name from components/Icon.
 export const ADMIN_NAV = [
-  { to: ROUTES.ADMIN.DASHBOARD, label: 'Dashboard', exact: true },
-  { to: ROUTES.ADMIN.DOCUMENTS, label: 'Documents' },
-  { to: ROUTES.ADMIN.INVENTORY, label: 'Inventory' },
-  { to: ROUTES.ADMIN.ALLOWANCE, label: 'Allowance Track' },
+  { group: 'Overview', to: ROUTES.ADMIN.DASHBOARD, label: 'Dashboard', icon: 'dashboard', exact: true },
+  { group: 'Records', to: ROUTES.ADMIN.DOCUMENTS, label: 'Documents', icon: 'documents' },
+  { group: 'Records', to: ROUTES.ADMIN.INVENTORY, label: 'Inventory', icon: 'inventory' },
+  { group: 'Records', to: ROUTES.ADMIN.INVENTORY_REQUESTS, label: 'Supply requests', icon: 'request' },
+  { group: 'Records', to: ROUTES.ADMIN.ALLOWANCE, label: 'Allowance tracking', icon: 'allowance' },
 ]
 
 export const LEARNING_CENTER_NAV = [
-  { to: ROUTES.CENTER.DASHBOARD, label: 'Dashboard', exact: true },
-  { to: ROUTES.CENTER.PROGRAMS, label: 'Programs' },
-  { to: ROUTES.CENTER.AVAILABLE_INVENTORY, label: 'Request Inventory' },
-  { to: ROUTES.CENTER.REQUEST_ALLOWANCE, label: 'Request Allowance' },
-  { to: ROUTES.CENTER.DELIVERY_PERSONNEL, label: 'Delivery Personnel' },
+  { group: 'Overview', to: ROUTES.CENTER.DASHBOARD, label: 'Dashboard', icon: 'dashboard', exact: true },
+  { group: 'Training', to: ROUTES.CENTER.PROGRAMS, label: 'Programs', icon: 'programs' },
+  { group: 'Requests', to: ROUTES.CENTER.AVAILABLE_INVENTORY, label: 'Request inventory', icon: 'request' },
+  { group: 'Requests', to: ROUTES.CENTER.REQUEST_ALLOWANCE, label: 'Request allowance', icon: 'coins' },
+  { group: 'Team', to: ROUTES.CENTER.DELIVERY_PERSONNEL, label: 'Delivery personnel', icon: 'truck' },
 ]
 
-// Subtitle and search hint shown under each page title, per role (from Figma).
-export const ADMIN_SUBTITLE = 'Company documents, main-building items, and batch allowance requests.'
-export const LEARNING_CENTER_SUBTITLE = 'Your student batches, resource requests, and allowance checklists.'
+// Subtitle shown under each page title, per role.
+export const ADMIN_SUBTITLE = 'Main office records, supplies, and allowance requests from every learning center.'
+export const LEARNING_CENTER_SUBTITLE = 'Your programs, student batches, and requests to the main office.'
