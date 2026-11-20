@@ -1,21 +1,22 @@
 import { Link } from 'react-router-dom'
+import Icon from '../Icon/Icon.jsx'
 
 /**
- * The big gray rounded panel under the page header, as in every Figma screen.
- * title/description: heading inside the panel. back: path for the ← link.
- * actions: buttons on the right. sample: shows a "Sample data" tag.
- * flush: lets tables run edge to edge.
+ * The main content panel under the page header.
+ * title/description: heading inside the panel. back: path for the "Back" link (backLabel to name it).
+ * actions: buttons on the right. sample: shows a "Sample data" tag. flush: lets tables run edge to edge.
  */
-export default function Workspace({ title, description, back, actions, sample = false, flush = false, children }) {
-  const hasHead = title || back || actions || sample
+export default function Workspace({ title, description, back, backLabel = 'Back', actions, sample = false, flush = false, children }) {
+  const hasHead = title || back || actions || sample || description
   return (
     <section className="workspace">
       {hasHead && (
         <div className="workspace-head">
           <div className="workspace-title">
             {back && (
-              <Link to={back} className="back-link" aria-label="Back">
-                ←
+              <Link to={back} className="back-link">
+                <Icon name="arrowLeft" size={16} />
+                {backLabel}
               </Link>
             )}
             {title && <h2>{title}</h2>}
