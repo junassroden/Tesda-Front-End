@@ -1,64 +1,131 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
+import EmptyState from '../../../components/EmptyState/EmptyState.jsx'
 import NumberInput from '../../../components/form/NumberInput.jsx'
+import TextArea from '../../../components/form/TextArea.jsx'
+import Icon from '../../../components/Icon/Icon.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
-import { LEARNING_CENTER_SUBTITLE } from '../../../constants/navItems.js'
 import { ROUTES } from '../../../constants/routes.js'
+import { toList } from '../../../services/api.js'
 import { inventoryService } from '../../../services/inventoryService.js'
 
+const initials = (name = '') =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('')
+
 // Figma: Request Inventory 02
-// Sending a request needs a backend endpoint; until then the button is disabled.
 export default function RequestItemPage() {
   const { itemId } = useParams()
   const [item, setItem] = useState(null)
+  const [personnel, setPersonnel] = useState([])
   const [quantity, setQuantity] = useState('')
-  const [personnel, setPersonnel] = useState('')
+  const [deliveryId, setDeliveryId] = useState('')
+  const [purpose, setPurpose] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState(null) // { ok, text }
 
+  // GET /products/:id is admin-only in the backend, so find the item in the list instead.
   useEffect(() => {
     inventoryService
-      .get(itemId)
-      .then((data) => setItem(data?.product ?? data))
+      .list()
+      .then((data) => setItem(toList(data).find((p) => String(p.id) === itemId) ?? false))
       .catch(() => setItem(false))
+    inventoryService
+      .deliveryPersonnel()
+      .then((data) => setPersonnel((data.personnel ?? []).filter((p) => Number(p.is_active))))
+      .catch(() => setPersonnel([]))
   }, [itemId])
 
-  const stock = item ? String(item.quantity ?? 0).padStart(2, '0') : '00'
+  const submit = async (event) => {
+    event.preventDefault()
+    setBusy(true)
+    setResult(null)
+    try {
+      const res = await inventoryService.createRequest({
+        items: [{ product_id: Number(itemId), quantity: Number(quantity) || 0 }],
+        delivery_personnel_id: deliveryId ? Number(deliveryId) : null,
+        purpose: purpose.trim(),
+      })
+      setResult({ ok: true, text: res.message })
+      setQuantity('')
+      setPurpose('')
+    } catch (err) {
+      setResult({ ok: false, text: err.message })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <>
-      <PageHeader title="Request Inventory" subtitle={LEARNING_CENTER_SUBTITLE} />
-      <Workspace back={ROUTES.CENTER.AVAILABLE_INVENTORY} flush>
-        <div className="detail-head">
-          <div>
-            <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 600 }}>{item ? item.product_name : item === false ? 'Item not found' : 'Loading…'}</h2>
-            <p>{item?.description || 'Item description'}</p>
-          </div>
-          <div className="detail-qty">
-            Quantity <span>{stock}</span>
-          </div>
-        </div>
+      <PageHeader title="Request supplies" subtitle="Tell the main office how many you need and why." />
+      <Workspace back={ROUTES.CENTER.AVAILABLE_INVENTORY} backLabel="Available items" flush>
+        {item === false ? (
+          <EmptyState icon="inventory" title="Item not found" text="It may have been removed from the main office stock." />
+        ) : (
+          <>
+            <div className="detail-head">
+              <div>
+                <h2>{item ? item.product_name : 'Loading…'}</h2>
+                <p>{item?.description || (item ? 'No description yet.' : '')}</p>
+              </div>
+              <div className="detail-qty">
+                <span>Available</span>
+                <strong>{item ? Number(item.quantity ?? 0) : '—'}</strong>
+              </div>
+            </div>
 
-        <div className="ph detail-media short" role="img" aria-label="Item image placeholder" />
+            <div className="detail-layout">
+              <div className="detail-media is-empty" aria-hidden="true">
+                <span className="item-initials">{initials(item?.product_name)}</span>
+              </div>
 
-        <form className="allowance-form" style={{ paddingTop: 0 }} onSubmit={(e) => e.preventDefault()}>
-          <div className="form-row even" style={{ maxWidth: 640 }}>
-            <label className="field compact" htmlFor="personnel">
-              <span>Delivery Personnel</span>
-              <select id="personnel" value={personnel} onChange={(e) => setPersonnel(e.target.value)}>
-                <option value="">Delivery Personnel</option>
-              </select>
-            </label>
-            <NumberInput id="quantity" label="Quantity to request" className="compact" value={quantity} onChange={setQuantity} min={1} max={item ? Number(item.quantity) || undefined : undefined} />
-          </div>
-          <div className="ph detail-media short" style={{ margin: 0 }} role="img" aria-label="Delivery details placeholder" />
-          <div className="form-actions">
-            <span className="sample-tag">Inventory requests are not available yet</span>
-            <Button type="submit" className="btn-lg" disabled>
-              Request Item
-            </Button>
-          </div>
-        </form>
+              <form className="side-panel" onSubmit={submit}>
+                <h3>Your request</h3>
+                <NumberInput id="quantity" label="Quantity needed" value={quantity} onChange={setQuantity} min={1} max={item ? Number(item.quantity) || undefined : undefined} />
+                <label className="field" htmlFor="personnel">
+                  <span>Delivery personnel</span>
+                  <select id="personnel" value={deliveryId} onChange={(e) => setDeliveryId(e.target.value)}>
+                    <option value="">{personnel.length ? 'Choose who will pick it up' : 'No delivery personnel yet'}</option>
+                    {personnel.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name}
+                        {p.vehicle ? ` · ${p.vehicle}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {!personnel.length && (
+                    <small>
+                      Add people under <Link to={ROUTES.CENTER.DELIVERY_PERSONNEL}>Delivery personnel</Link>.
+                    </small>
+                  )}
+                </label>
+                <TextArea id="purpose" label="Purpose" rows={3} placeholder="e.g. For the new SMAW batch starting in December" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
+                <Button type="submit" disabled={busy || !item}>
+                  <Icon name="request" size={17} />
+                  {busy ? 'Sending…' : 'Send request'}
+                </Button>
+                {result && (
+                  <p className={result.ok ? 'notice' : 'notice is-error'} role="status">
+                    {result.text}
+                    {result.ok && (
+                      <>
+                        {' '}
+                        <Link to={ROUTES.CENTER.DASHBOARD}>Track it on your dashboard</Link>
+                      </>
+                    )}
+                  </p>
+                )}
+              </form>
+            </div>
+          </>
+        )}
       </Workspace>
     </>
   )
