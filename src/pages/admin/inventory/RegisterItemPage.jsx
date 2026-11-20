@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
 import ImageUpload from '../../../components/form/ImageUpload.jsx'
 import NumberInput from '../../../components/form/NumberInput.jsx'
+import TextArea from '../../../components/form/TextArea.jsx'
 import TextInput from '../../../components/form/TextInput.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
-import { ADMIN_SUBTITLE } from '../../../constants/navItems.js'
 import { ROUTES } from '../../../constants/routes.js'
 import { inventoryService } from '../../../services/inventoryService.js'
 
@@ -22,6 +22,7 @@ export default function RegisterItemPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (!name.trim()) return setError('Enter the item name.')
     setBusy(true)
     setError('')
     try {
@@ -35,19 +36,43 @@ export default function RegisterItemPage() {
 
   return (
     <>
-      <PageHeader title="Inventory Registration" subtitle={ADMIN_SUBTITLE} />
-      <Workspace back={ROUTES.ADMIN.INVENTORY} title="Register an Item" flush>
-        <form className="form-card" onSubmit={handleSubmit}>
-          {error && <p className="form-error">{error}</p>}
-          <div className="form-row">
-            <TextInput id="product_name" label="Item Name" placeholder="e.g Welding Machine" value={name} onChange={(e) => setName(e.target.value)} required />
-            <NumberInput id="quantity" label="Quantity" value={quantity} onChange={setQuantity} />
+      <PageHeader title="Inventory" subtitle="Add a supply or piece of equipment to the main office stock." />
+      <Workspace back={ROUTES.ADMIN.INVENTORY} backLabel="Inventory" title="Register an item" flush>
+        <form className="form-card" onSubmit={handleSubmit} noValidate>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="form-section">
+            <div className="form-section-intro">
+              <h3>Item details</h3>
+              <p>What learning centers will see when they request it.</p>
+            </div>
+            <div className="form-fields">
+              <div className="form-row">
+                <TextInput id="product_name" label="Item name" placeholder="e.g. Welding machine (MIG)" value={name} onChange={(e) => setName(e.target.value)} required />
+                <NumberInput id="quantity" label="Quantity on hand" value={quantity} onChange={setQuantity} />
+              </div>
+              <TextArea id="description" label="Description" rows={3} placeholder="e.g. MIG (Metal Inert Gas / GMAW), 200A, with regulator" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
           </div>
-          <TextInput id="description" label="Item Description" placeholder="e.g MIG (Metal Inert Gas / GMAW)" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <ImageUpload id="image" file={image} onChange={setImage} />
+
+          <div className="form-section">
+            <div className="form-section-intro">
+              <h3>Photo</h3>
+              <p>Optional. Helps centers pick the right item.</p>
+            </div>
+            <ImageUpload id="image" file={image} onChange={setImage} />
+          </div>
+
           <div className="form-actions">
-            <Button type="submit" className="btn-lg" disabled={busy}>
-              {busy ? 'Saving…' : 'Register Item'}
+            <Button variant="secondary" to={ROUTES.ADMIN.INVENTORY}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Register item'}
             </Button>
           </div>
         </form>
