@@ -1,7 +1,6 @@
-import { api, notAvailable } from './api.js'
+import { api } from './api.js'
 
-// Programs are the NC courses stored by the backend (/courses).
-// Batches and batch student lists have no endpoints yet.
+// Programs are the NC courses stored by the backend (/courses), plus their batches and trainees.
 export const programService = {
   list: () => api.get('/courses'),
   get: (id) => api.get(`/courses/${id}`),
@@ -10,6 +9,8 @@ export const programService = {
   update: (id, program) => api.put(`/courses/${id}`, program),
   remove: (id) => api.delete(`/courses/${id}`),
 
-  batches: () => notAvailable('Batch lists'),
-  students: () => notAvailable('Student lists'),
+  batches: (courseId) => api.get(`/courses/${courseId}/batches`),
+  createBatch: (courseId, batch) => api.post(`/courses/${courseId}/batches`, batch),
+  centerBatches: () => api.get('/batches'),
+  students: (batchId) => api.get(`/batches/${batchId}/students`),
 }
