@@ -1,3 +1,5 @@
+import Icon from '../Icon/Icon.jsx'
+
 /** ← 1 2 3 … → . Pair with hooks/usePagination. Shows at most 5 page numbers around the current page. */
 export default function Pagination({ page, pageCount, onChange }) {
   if (pageCount <= 1) return null
@@ -8,7 +10,7 @@ export default function Pagination({ page, pageCount, onChange }) {
   return (
     <nav className="pagination" aria-label="Pages">
       <button type="button" onClick={() => onChange(page - 1)} disabled={page <= 1} aria-label="Previous page">
-        ←
+        <Icon name="arrowLeft" size={16} />
       </button>
       {pages.map((n) => (
         <button key={n} type="button" onClick={() => onChange(n)} aria-current={n === page ? 'page' : undefined}>
@@ -16,7 +18,7 @@ export default function Pagination({ page, pageCount, onChange }) {
         </button>
       ))}
       <button type="button" onClick={() => onChange(page + 1)} disabled={page >= pageCount} aria-label="Next page">
-        →
+        <Icon name="arrowRight" size={16} />
       </button>
     </nav>
   )
