@@ -1,43 +1,82 @@
-/* Low-fidelity tokens taken from the Figma wireframe (grayscale). Swap in brand colors for high fidelity. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* TESDA NEXUS design tokens.
+   Calm, crafted, institutional: cool neutral canvas, white surfaces with hairline
+   borders, TESDA blue for primary actions and the current page. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
 
 :root {
   color-scheme: light;
 
-  /* Fonts */
-  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 20px;
-  --text-xl: 28px;
-  --text-2xl: 34px;
-  --text-hero: 64px;
+  /* Type */
+  --font: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-display: clamp(2.6rem, 4.8vw, 4rem);
 
-  /* Colors */
-  --bg: #ffffff;
+  /* Neutrals (cool, slightly blue) */
+  --canvas: #f3f4f7;
   --surface: #ffffff;
-  --panel: #d9d9d9;           /* big gray workspace and sidebar */
-  --row: #f3f3f3;             /* table rows, item cards, small boxes */
-  --placeholder: #e4e4e4;     /* image placeholder fill */
-  --placeholder-line: #a3a3a3;
-  --border: #8a8a8a;          /* inputs, buttons, cards */
-  --row-line: #3f3f46;        /* lines between table rows */
-  --ink: #111827;             /* headings, numbers */
-  --text: #18181b;
-  --muted: #52525b;           /* subtitles, captions */
+  --surface-2: #f9fafb;
+  --surface-3: #f1f3f6;
+  --line: #e6e8ec;
+  --line-strong: #d5d9e0;
+  --ink: #0f1729;
+  --text: #344054;
+  --muted: #667085;
+  --subtle: #98a2b3;
 
-  /* Status dots */
-  --info: #2563eb;
-  --success: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --neutral: #18181b;
+  /* Brand */
+  --brand: #2342bf;
+  --brand-hover: #1d37a1;
+  --brand-soft: #eef1fc;
+  --brand-line: #d6ddf7;
+  --brand-ink: #1a2f86;
+
+  /* Status */
+  --success: #17803d;
+  --success-soft: #ecf8f0;
+  --warning: #b25e09;
+  --warning-soft: #fef6e7;
+  --danger: #c4320a;
+  --danger-soft: #fef1ee;
+  --info: #2342bf;
+  --info-soft: #eef1fc;
+  --neutral: #667085;
+  --neutral-soft: #f2f4f7;
 
   /* Shape */
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 24px;
-  --gap: 16px;
-  --sidebar-width: 280px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 22px;
+
+  /* Depth: hairline + a whisper of shadow */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 0 0 1px rgba(16, 24, 40, 0.045), 0 1px 2px rgba(16, 24, 40, 0.03), 0 10px 28px -12px rgba(16, 24, 40, 0.1);
+  --shadow-md: 0 0 0 1px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.03), 0 20px 40px -16px rgba(16, 24, 40, 0.16);
+  --shadow-lg: 0 0 0 1px rgba(16, 24, 40, 0.05), 0 32px 64px -24px rgba(16, 24, 40, 0.24);
+  --ring: 0 0 0 3px rgba(35, 66, 191, 0.16);
+
+  /* Motion */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --fast: 140ms;
+  --base: 280ms;
+  --slow: 800ms;
+
+  /* Layout */
+  --sidebar-width: 256px;
+  --topbar-height: 56px;
+  --content-max: 1240px;
+
+  /* Layers */
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-skip: 50;
 }
