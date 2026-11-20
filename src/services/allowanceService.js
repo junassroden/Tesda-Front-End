@@ -1,9 +1,10 @@
-import { notAvailable } from './api.js'
+import { api } from './api.js'
 
-// Allowance has no backend endpoints yet. Replace these when the API exists.
+// Training allowance requests (one per batch) and the per-trainee checklist.
 export const allowanceService = {
-  list: () => notAvailable('Allowance'),
-  requests: () => notAvailable('Allowance requests'),
-  get: () => notAvailable('Allowance details'),
-  request: () => notAvailable('Allowance requests'),
+  list: () => api.get('/allowance-requests'),
+  get: (id) => api.get(`/allowance-requests/${id}`),
+  request: (payload) => api.post('/allowance-requests', payload), // { batch_id, amount_per_student, notes }
+  checkStudent: (id, studentId, checked) => api.put(`/allowance-requests/${id}/students/${studentId}`, { checked }),
+  setStatus: (id, status, remarks = '') => api.post(`/allowance-requests/${id}/status`, { status, remarks }),
 }
