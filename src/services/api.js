@@ -44,6 +44,10 @@ export async function request(path, { method = 'GET', body, form } = {}) {
 
   if (!response.ok) {
     if (response.status === 401 && unauthorizedHandler && path !== '/login') unauthorizedHandler()
+    // The Vite proxy answers 502/504 when the backend is down.
+    if ((response.status === 502 || response.status === 504) && !data?.error) {
+      throw new ApiError('The server could not be reached. Check that the backend is running.', response.status)
+    }
     throw new ApiError(data?.error || `Request failed (${response.status}).`, response.status, data?.errors || [])
   }
   return data
