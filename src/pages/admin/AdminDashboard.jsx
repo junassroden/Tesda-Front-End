@@ -1,172 +1,217 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Button from '../../components/Button/Button.jsx'
 import StatusBadge from '../../components/DataTable/StatusBadge.jsx'
+import EmptyState, { ListSkeleton } from '../../components/EmptyState/EmptyState.jsx'
+import Icon from '../../components/Icon/Icon.jsx'
 import KpiCard from '../../components/KpiCard/KpiCard.jsx'
 import PageHeader from '../../components/PageHeader/PageHeader.jsx'
-import { ROUTES } from '../../constants/routes.js'
+import { ADMIN_SUBTITLE } from '../../constants/navItems.js'
+import { ROUTES, toPath } from '../../constants/routes.js'
 import { toList } from '../../services/api.js'
 import { documentService } from '../../services/documentService.js'
 import { inventoryService } from '../../services/inventoryService.js'
+import { summaryService } from '../../services/summaryService.js'
+import { countOf, peso, shortDate, timeAgo } from '../../utils/format.js'
 
-// Sample content from the Figma frame, shown where the backend has no data source yet.
-const SAMPLE_DOCS = [
-  { title: 'Vendor contract renewal', meta: 'Procurement · Contract', status: 'In review' },
-  { title: 'Insurance policy', meta: 'Administration · Policy', status: 'Current' },
-  { title: 'Compliance checklist', meta: 'Operations · Supporting files needed', status: 'Incomplete' },
-]
-const SAMPLE_ITEM_REQUESTS = [
-  { title: 'REQ-012 · Safety kits × 4', meta: 'Facilities · Main building' },
-  { title: 'REQ-011 · Toolboxes × 2', meta: 'Maintenance · Main building' },
-  { title: 'REQ-010 · Laptop × 1', meta: 'Administration · Main building' },
-]
-const SAMPLE_ACTIVITY = [
-  { title: 'Company document added', meta: 'Procurement · Vendor contract renewal' },
-  { title: 'Item request submitted', meta: 'Facilities · 4 safety kits requested' },
-  { title: 'Batch allowance requested', meta: 'North Center · Batch 2026-01 · 30 students' },
-]
+const ACTIVITY_ICON = { inventory_request: 'request', allowance_request: 'coins', batch: 'programs', delivery_personnel: 'truck' }
 
 // Figma: Dashboard Page (Admin)18
 export default function AdminDashboard() {
   const [documents, setDocuments] = useState(null)
   const [items, setItems] = useState(null)
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    documentService
-      .list()
-      .then((data) => setDocuments(toList(data)))
-      .catch(() => setDocuments(null))
-    inventoryService
-      .list()
-      .then((data) => setItems(toList(data)))
-      .catch(() => setItems(null))
+    Promise.allSettled([documentService.list(), inventoryService.list(), summaryService.get()]).then(([docs, inv, sum]) => {
+      setDocuments(docs.status === 'fulfilled' ? toList(docs.value) : null)
+      setItems(inv.status === 'fulfilled' ? toList(inv.value) : null)
+      setSummary(sum.status === 'fulfilled' ? sum.value : null)
+      setLoading(false)
+    })
   }, [])
 
   const totalQty = items?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)
-  const recentDocs = documents?.slice(0, 3).map((d) => ({ title: d.original_name, meta: [d.image_label, d.text_label].filter(Boolean).join(' · ') || 'Document', status: null }))
+  const lowStock = items?.filter((p) => Number(p.quantity || 0) <= 5) ?? []
+  const recentDocs = documents?.slice(0, 4) ?? []
+
+  const req = summary?.inventory_requests?.by_status ?? {}
+  const reqTotal = Object.values(req).reduce((a, b) => a + Number(b), 0)
+  const alw = summary?.allowance?.by_status ?? {}
+  const alwTotal = Object.values(alw).reduce((a, b) => a + b.count, 0)
+  const alwPendingAmount = ['pending', 'budget_check', 'for_approval', 'approved'].reduce((s, k) => s + (alw[k]?.amount ?? 0), 0)
+  const alwReleasedAmount = alw.released?.amount ?? 0
 
   return (
     <>
-      <PageHeader title="Dashboard overview" subtitle="Company documents, main-building items, and batch allowance requests. Sample data shown where the backend has none yet." />
+      <PageHeader title="Main office overview" subtitle={ADMIN_SUBTITLE} />
 
       <div className="kpi-grid">
-        <KpiCard label="Company documents" value={documents?.length} hint="Current company records" />
-        <KpiCard label="Main-building items" value={totalQty} hint="Assets, supplies & equipment" />
-        <KpiCard label="Pending item requests" value={12} hint="Awaiting review or fulfillment (sample)" />
-        <KpiCard label="Pending allowance requests" value={8} hint="Current batches · learning centers (sample)" />
+        <KpiCard icon="documents" label="Company documents" value={documents?.length} hint="In the main office archive" loading={loading} />
+        <KpiCard
+          icon="inventory"
+          label="Items in stock"
+          value={totalQty?.toLocaleString()}
+          bars={items?.map((p) => ({ label: p.product_name, value: Number(p.quantity) || 0 }))}
+          hint={items ? `${items.length} item types · ${lowStock.length} running low` : 'Main office supplies'}
+          loading={loading}
+        />
+        <KpiCard
+          icon="request"
+          label="Supply requests"
+          value={reqTotal}
+          loading={loading}
+          split={[
+            { label: 'to review', value: countOf(req, ['pending', 'in_review']), tone: 'warning' },
+            { label: 'to release', value: countOf(req, ['approved']), tone: 'info' },
+            { label: 'done', value: countOf(req, ['released', 'received']), tone: 'success' },
+          ]}
+        />
+        <KpiCard
+          icon="coins"
+          label="Allowance requests"
+          value={alwTotal}
+          loading={loading}
+          split={[
+            { label: 'open', value: countOf(alw, ['pending', 'budget_check', 'for_approval', 'approved']), tone: 'warning' },
+            { label: 'released', value: countOf(alw, ['released']), tone: 'success' },
+          ]}
+        />
       </div>
 
       <div className="dash-grid">
         <div className="stack">
           <section className="card">
             <div className="card-head">
-              <h2>Company documents</h2>
-              <Link to={ROUTES.ADMIN.DOCUMENTS}>View documents</Link>
+              <h2>Supply requests</h2>
+              <Link to={ROUTES.ADMIN.INVENTORY_REQUESTS}>
+                Review all <Icon name="arrowRight" size={15} />
+              </Link>
             </div>
-            <div className="mini-stats">
-              <MiniStat label="In review" value={24} />
-              <MiniStat label="Incomplete" value={6} />
-              <MiniStat label="Expiring" value={4} />
-              <MiniStat label="Current" value={94} />
-            </div>
-            <p className="list-label">
-              Recent documents <span>{recentDocs?.length ? 'Latest uploads' : 'Sample records'}</span>
-            </p>
-            <ListRows rows={recentDocs?.length ? recentDocs : SAMPLE_DOCS} />
+            {loading ? (
+              <ListSkeleton />
+            ) : summary?.inventory_requests?.recent?.length ? (
+              <ul className="list-rows">
+                {summary.inventory_requests.recent.map((r) => (
+                  <li key={r.id} className="list-row">
+                    <Link to={toPath(ROUTES.ADMIN.INVENTORY_REQUEST_DETAIL, { id: r.id })} className="list-link">
+                      <strong>
+                        {r.request_code} · {r.items_summary || 'No items'}
+                      </strong>
+                      <small>
+                        {r.center_name} · {shortDate(r.created_at)}
+                      </small>
+                    </Link>
+                    <StatusBadge status={r.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState compact icon="request" text="No supply requests yet. They appear here when a learning center sends one." />
+            )}
           </section>
 
           <section className="card">
             <div className="card-head">
-              <h2>Main-building inventory</h2>
-              <Link to={ROUTES.ADMIN.INVENTORY}>View items</Link>
+              <h2>Recent documents</h2>
+              <Link to={ROUTES.ADMIN.DOCUMENTS}>
+                Open archive <Icon name="arrowRight" size={15} />
+              </Link>
             </div>
-            <div className="mini-stats">
-              <MiniStat label="Total items" value={totalQty ?? 312} />
-              <MiniStat label="In use" value={60} />
-              <MiniStat label="Reserved" value={48} />
-              <MiniStat label="Available" value={204} />
-            </div>
-            <p className="list-label">
-              Item requests · 12 pending <Link to={ROUTES.ADMIN.INVENTORY_REQUESTS}>Review requests</Link>
-            </p>
-            <ListRows rows={SAMPLE_ITEM_REQUESTS.map((r) => ({ ...r, status: 'Pending' }))} />
+            {loading ? (
+              <ListSkeleton />
+            ) : recentDocs.length ? (
+              <ul className="list-rows">
+                {recentDocs.map((d) => (
+                  <li key={d.id} className="list-row with-icon">
+                    <span className="row-icon">
+                      <Icon name="documents" size={17} />
+                    </span>
+                    <div>
+                      <strong>{d.original_name}</strong>
+                      <small>{[d.image_label, d.text_label].filter(Boolean).join(' · ').replace(/_/g, ' ') || 'Not classified yet'}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState compact icon="documents" text="No documents in the archive yet. Uploads appear here with their AI label." />
+            )}
           </section>
         </div>
 
         <div className="stack">
           <section className="card">
             <div className="card-head">
-              <h2>Allowance requests</h2>
-              <Link to={ROUTES.ADMIN.ALLOWANCE}>Review requests</Link>
+              <h2>Allowance</h2>
             </div>
-            <p className="list-label">Current student batches</p>
-            <div className="big-number">8</div>
-            <p className="card-caption">8 pending · 4 budget checks · 4 for approval</p>
-            <ul className="list-rows">
-              <li className="list-row">
-                <div>
-                  <small>North Center · Batch 2026-01</small>
-                  <br />
-                  <small>30 students · Budget check</small>
-                </div>
-              </li>
-              <li className="list-row">
-                <div>
-                  <small>South Center · Batch 2026-02</small>
-                  <br />
-                  <small>25 students · For approval</small>
-                </div>
-              </li>
-            </ul>
-            <p className="list-label" style={{ marginTop: 12 }}>
-              Submitted by learning centers
-            </p>
-            <p className="card-caption">Requests cover each center&apos;s current student batch.</p>
+            <div className="big-number">{loading ? '—' : peso(alwPendingAmount + alwReleasedAmount)}</div>
+            <p className="card-caption">Requested across {alwTotal} batch{alwTotal === 1 ? '' : 'es'}</p>
+            {alwPendingAmount + alwReleasedAmount > 0 && (
+              <div className="progress" aria-hidden="true">
+                <span className="p1" style={{ width: `${(alwPendingAmount / (alwPendingAmount + alwReleasedAmount)) * 100}%` }} />
+                <span className="p3" style={{ width: `${(alwReleasedAmount / (alwPendingAmount + alwReleasedAmount)) * 100}%` }} />
+              </div>
+            )}
+            <div className="legend">
+              <span>
+                <i className="p1" />
+                Open {peso(alwPendingAmount)}
+              </span>
+              <span>
+                <i className="p3" />
+                Released {peso(alwReleasedAmount)}
+              </span>
+            </div>
+            <Button variant="secondary" to={ROUTES.ADMIN.ALLOWANCE} className="btn-block qa" trailingIcon="arrowRight">
+              Open allowance tracking
+            </Button>
           </section>
 
           <section className="card">
             <div className="card-head">
               <h2>Recent activity</h2>
-              <span>Sample activity</span>
             </div>
-            <ul className="list-rows">
-              {SAMPLE_ACTIVITY.map((a) => (
-                <li key={a.title} className="list-row with-icon">
-                  <span className="ph ph-icon" aria-hidden="true" />
-                  <div>
-                    <strong>{a.title}</strong>
-                    <small>{a.meta}</small>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {loading ? (
+              <ListSkeleton />
+            ) : summary?.activity?.length ? (
+              <ul className="list-rows">
+                {summary.activity.map((a) => (
+                  <li key={a.id} className="list-row with-icon">
+                    <span className="row-icon">
+                      <Icon name={ACTIVITY_ICON[a.entity_type] ?? 'clock'} size={17} />
+                    </span>
+                    <div>
+                      <strong>{a.description}</strong>
+                      <small>{[a.user_name, a.center_name, timeAgo(a.created_at)].filter(Boolean).join(' · ')}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState compact icon="clock" text="Nothing has happened yet." />
+            )}
           </section>
+
+          {lowStock.length > 0 && (
+            <section className="card">
+              <div className="card-head">
+                <h2>Running low</h2>
+                <Link to={ROUTES.ADMIN.INVENTORY}>Inventory</Link>
+              </div>
+              <ul className="list-rows">
+                {lowStock.slice(0, 4).map((p) => (
+                  <li key={p.id} className="list-row">
+                    <strong>{p.product_name}</strong>
+                    <span className="status-badge status-warning">{p.quantity} left</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </div>
     </>
-  )
-}
-
-function MiniStat({ label, value }) {
-  return (
-    <div className="mini-stat">
-      <span>{label}</span>
-      <strong>{value ?? '—'}</strong>
-    </div>
-  )
-}
-
-function ListRows({ rows }) {
-  return (
-    <ul className="list-rows">
-      {rows.map((r, i) => (
-        <li key={`${r.title}-${i}`} className="list-row">
-          <div>
-            <strong>{r.title}</strong>
-            <small>{r.meta}</small>
-          </div>
-          {r.status && <StatusBadge status={r.status} variant="pill" />}
-        </li>
-      ))}
-    </ul>
   )
 }
