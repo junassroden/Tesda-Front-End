@@ -1,10 +1,12 @@
-import { NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import Icon from '../Icon/Icon.jsx'
 
-/** One sidebar button. NavLink adds the "active" class on the current page. */
-export default function SidebarItem({ to, label, exact = false }) {
+/** One sidebar link. The Sidebar decides which single link is active. */
+export default function SidebarItem({ to, label, icon, active = false }) {
   return (
-    <NavLink to={to} end={exact} className="sidebar-item">
-      {label}
-    </NavLink>
+    <Link to={to} className={active ? 'sidebar-item active' : 'sidebar-item'} aria-current={active ? 'page' : undefined}>
+      {icon && <Icon name={icon} size={17} />}
+      <span>{label}</span>
+    </Link>
   )
 }
