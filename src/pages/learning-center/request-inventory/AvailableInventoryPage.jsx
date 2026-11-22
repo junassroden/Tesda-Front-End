@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import EmptyState from '../../../components/EmptyState/EmptyState.jsx'
-import ItemCard, { ItemCardSkeleton } from '../../../components/ItemCard/ItemCard.jsx'
+import InventoryCard, { InventoryCardSkeleton } from '../../../components/InventoryCard/InventoryCard.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Pagination from '../../../components/Pagination/Pagination.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
@@ -9,6 +9,7 @@ import { ROUTES, toPath } from '../../../constants/routes.js'
 import { usePagination } from '../../../hooks/usePagination.js'
 import { toList } from '../../../services/api.js'
 import { inventoryService } from '../../../services/inventoryService.js'
+import { CATEGORY_LABELS, qtyOf } from '../../../utils/inventory.js'
 
 // Figma: Request Inventory 10
 export default function AvailableInventoryPage() {
@@ -26,28 +27,36 @@ export default function AvailableInventoryPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filtered = items.filter((p) => `${p.product_name ?? ''} ${p.description ?? ''}`.toLowerCase().includes(search.toLowerCase()))
+  const filtered = items
+    .filter((p) => `${p.product_name ?? ''} ${p.description ?? ''} ${CATEGORY_LABELS[p.category] ?? ''}`.toLowerCase().includes(search.toLowerCase()))
+    // Items that can be requested first; out-of-stock ones last.
+    .sort((a, b) => Number(qtyOf(b) > 0) - Number(qtyOf(a) > 0) || String(a.product_name).localeCompare(String(b.product_name)))
   const { rows, page, pageCount, setPage } = usePagination(filtered, 12)
 
   return (
     <>
       <PageHeader title="Request supplies" subtitle="Pick an item from the main office stock, then say how many you need and who will pick it up." search={search} onSearch={setSearch} searchPlaceholder="Search items" />
-      <Workspace title="Available at the main office" description={loading ? 'Loading items…' : `${items.length} items you can request`}>
+      <Workspace title="Available at the main office" description={loading ? 'Loading items…' : `${items.filter((p) => qtyOf(p) > 0).length} of ${items.length} items in stock`}>
         {error && (
           <p className="form-error" role="alert">
             {error}
           </p>
         )}
         {loading ? (
-          <div className="card-grid">
+          <div className="inv-cards">
             {Array.from({ length: 8 }, (_, i) => (
-              <ItemCardSkeleton key={i} />
+              <InventoryCardSkeleton key={i} />
             ))}
           </div>
         ) : rows.length ? (
-          <div className="card-grid">
+          <div className="inv-cards">
             {rows.map((p) => (
-              <ItemCard key={p.id} name={p.product_name} quantity={p.quantity} unit="available" description={p.description} onClick={() => navigate(toPath(ROUTES.CENTER.REQUEST_ITEM, { itemId: p.id }))} />
+              <InventoryCard
+                key={p.id}
+                item={p}
+                meta={qtyOf(p) > 0 ? `${qtyOf(p).toLocaleString()} ${p.unit || 'pc'} available` : 'None available right now'}
+                onOpen={() => navigate(toPath(ROUTES.CENTER.REQUEST_ITEM, { itemId: p.id }))}
+              />
             ))}
           </div>
         ) : (
