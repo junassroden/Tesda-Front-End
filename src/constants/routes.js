@@ -9,6 +9,7 @@ export const ROUTES = {
     DOCUMENT_DETAIL: '/admin/documents/:id',
     INVENTORY: '/admin/inventory',
     REGISTER_ITEM: '/admin/inventory/register',
+    INVENTORY_ITEM: '/admin/inventory/items/:id',
     INVENTORY_REQUESTS: '/admin/inventory/requests',
     INVENTORY_REQUEST_DETAIL: '/admin/inventory/requests/:id',
     ALLOWANCE: '/admin/allowance',
@@ -26,6 +27,13 @@ export const ROUTES = {
     REQUEST_ALLOWANCE: '/center/request-allowance',
     DELIVERY_PERSONNEL: '/center/delivery-personnel',
   },
+
+  TEACHER: {
+    DASHBOARD: '/teacher',
+    PROGRAMS: '/teacher/programs',
+    PROGRAM: '/teacher/programs/:programId',
+    STUDENTS: '/teacher/programs/:programId/batches/:batchId',
+  },
 }
 
 /** Fills route params: toPath(ROUTES.ADMIN.DOCUMENT_DETAIL, { id: 5 }) gives '/admin/documents/5'. */
@@ -37,10 +45,12 @@ export function toPath(route, params = {}) {
 export const ROLES = {
   ADMIN: 'admin',
   LEARNING_CENTER: 'center_admin',
+  TEACHER: 'instructor',
 }
 
 /** Where each role lands after logging in. */
 export const HOME_BY_ROLE = {
   [ROLES.ADMIN]: ROUTES.ADMIN.DASHBOARD,
   [ROLES.LEARNING_CENTER]: ROUTES.CENTER.DASHBOARD,
+  [ROLES.TEACHER]: ROUTES.TEACHER.DASHBOARD,
 }
