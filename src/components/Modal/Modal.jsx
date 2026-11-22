@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import Icon from '../Icon/Icon.jsx'
 
 /** Detail popup (the "Description" frame). Closes on Esc, the backdrop, or the × button. */
 export default function Modal({ open, title, onClose, children, footer }) {
@@ -16,8 +17,8 @@ export default function Modal({ open, title, onClose, children, footer }) {
       <div className="modal-box">
         <header className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-            ×
+          <button type="button" className="modal-close icon-btn" onClick={onClose} aria-label="Close">
+            <Icon name="x" size={18} />
           </button>
         </header>
         <div className="modal-body">{children}</div>
