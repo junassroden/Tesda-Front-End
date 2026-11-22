@@ -22,7 +22,7 @@ export default function ProtectedRoute({ roles }) {
   if (!user) return <Navigate to={ROUTES.LOGIN} replace state={{ from: location.pathname }} />
   if (roles && !roles.includes(user.role)) {
     const home = HOME_BY_ROLE[user.role]
-    // Roles without a portal yet (teacher, student) would loop between pages, so explain instead.
+    // Roles without a portal yet (student) would loop between pages, so explain instead.
     if (!home) {
       return (
         <div className="loading-screen" role="status">
