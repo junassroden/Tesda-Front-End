@@ -9,11 +9,40 @@ import PageHeader from '../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../components/Workspace/Workspace.jsx'
 import { inventoryService } from '../../services/inventoryService.js'
 
+const initials = (name = '') =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('')
+
 const COLUMNS = [
-  { key: 'full_name', label: 'Name' },
-  { key: 'contact_number', label: 'Contact', render: (r) => <span className="num muted">{r.contact_number || '—'}</span> },
-  { key: 'vehicle', label: 'Vehicle', render: (r) => <span className="muted">{r.vehicle || '—'}</span> },
-  { key: 'plate_number', label: 'Plate no.', render: (r) => <span className="num">{r.plate_number || '—'}</span> },
+  {
+    key: 'full_name',
+    label: 'Name',
+    render: (r) => (
+      <span className="alw-person">
+        <span className="alw-avatar" aria-hidden="true">
+          {initials(r.full_name)}
+        </span>
+        <span className="cell-stack">
+          <strong>{r.full_name}</strong>
+          <small className="num">{r.contact_number || 'No contact number'}</small>
+        </span>
+      </span>
+    ),
+  },
+  {
+    key: 'vehicle',
+    label: 'Vehicle',
+    render: (r) => (
+      <span className="cell-stack">
+        <span>{r.vehicle || '—'}</span>
+        <small className="num">{r.plate_number || 'No plate number'}</small>
+      </span>
+    ),
+  },
   { key: 'is_active', label: 'Status', render: (r) => <StatusBadge status={Number(r.is_active) ? 'active' : 'inactive'} /> },
 ]
 
@@ -77,7 +106,6 @@ export default function DeliveryPersonnelPage() {
           columns={COLUMNS}
           rows={people}
           loading={loading}
-          leadingIcon="truck"
           empty={{ icon: 'truck', title: 'No delivery personnel yet', text: 'Add the people who pick up supplies, so you can name them on a request.' }}
         />
       </Workspace>
