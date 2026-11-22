@@ -30,3 +30,22 @@ export function ListSkeleton({ rows = 3 }) {
     </div>
   )
 }
+
+/** "Couldn't load …" with the server's message and a retry. Use instead of an empty or not-found state when a request fails. */
+export function ErrorState({ what, message, onRetry, compact = false }) {
+  return (
+    <div className={compact ? 'empty-state compact is-error' : 'empty-state is-error'} role="alert">
+      <span className="empty-icon">
+        <Icon name="alert" size={20} />
+      </span>
+      <strong>{`Couldn’t load ${what}`}</strong>
+      {message && <p>{message}</p>}
+      {onRetry && (
+        <button type="button" className="btn btn-secondary" onClick={onRetry}>
+          <Icon name="refresh" size={16} />
+          Try again
+        </button>
+      )}
+    </div>
+  )
+}
