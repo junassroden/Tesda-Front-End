@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
 import DataTable from '../../../components/DataTable/DataTable.jsx'
 import StatusBadge from '../../../components/DataTable/StatusBadge.jsx'
-import EmptyState from '../../../components/EmptyState/EmptyState.jsx'
+import EmptyState, { ErrorState } from '../../../components/EmptyState/EmptyState.jsx'
 import TextArea from '../../../components/form/TextArea.jsx'
 import Icon from '../../../components/Icon/Icon.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
@@ -27,7 +27,8 @@ const ITEM_COLUMNS = [
 // Figma: Inventory Request Mesage 12
 export default function InventoryRequestDetailPage() {
   const { id } = useParams()
-  const [data, setData] = useState(null) // { request, items } | false
+  const [data, setData] = useState(null) // { request, items } | false (not found) | undefined (failed)
+  const [loadError, setLoadError] = useState('')
   const [remarks, setRemarks] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
@@ -36,8 +37,15 @@ export default function InventoryRequestDetailPage() {
     () =>
       inventoryService
         .request(id)
-        .then(setData)
-        .catch(() => setData(false)),
+        .then((d) => {
+          setLoadError('')
+          setData(d)
+        })
+        .catch((err) => {
+          if (err?.status === 404) return setData(false)
+          setLoadError(err?.message || 'Something went wrong.')
+          setData((prev) => prev || undefined)
+        }),
     [id],
   )
 
@@ -68,6 +76,16 @@ export default function InventoryRequestDetailPage() {
       <PageHeader title="Supply requests" subtitle="Review the request, then approve, reject, or release it." />
       <Workspace back={ROUTES.ADMIN.INVENTORY_REQUESTS} backLabel="All requests" flush>
         {data === null && <p className="notice inset-text">Loading request…</p>}
+        {data === undefined && loadError && (
+          <ErrorState
+            what="this request"
+            message={loadError}
+            onRetry={() => {
+              setData(null)
+              load()
+            }}
+          />
+        )}
         {data === false && <EmptyState icon="request" title="Request not found" text="It may have been removed, or the link is incomplete." />}
 
         {r && (
