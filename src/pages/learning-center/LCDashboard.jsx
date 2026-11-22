@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import Button from '../../components/Button/Button.jsx'
 import DataTable from '../../components/DataTable/DataTable.jsx'
 import StatusBadge from '../../components/DataTable/StatusBadge.jsx'
-import EmptyState, { ListSkeleton } from '../../components/EmptyState/EmptyState.jsx'
+import EmptyState, { ErrorState, ListSkeleton } from '../../components/EmptyState/EmptyState.jsx'
 import Icon from '../../components/Icon/Icon.jsx'
-import KpiCard from '../../components/KpiCard/KpiCard.jsx'
 import PageHeader from '../../components/PageHeader/PageHeader.jsx'
+import StatStrip from '../../components/StatStrip/StatStrip.jsx'
+import { LEARNING_CENTER_SUBTITLE } from '../../constants/navItems.js'
 import { ROUTES } from '../../constants/routes.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { toList } from '../../services/api.js'
@@ -14,6 +15,7 @@ import { inventoryService } from '../../services/inventoryService.js'
 import { programService } from '../../services/programService.js'
 import { summaryService } from '../../services/summaryService.js'
 import { countOf, peso, shortDate } from '../../utils/format.js'
+import { ALLOWANCE, SUPPLY } from '../../utils/requestStatus.js'
 
 const BATCH_COLUMNS = [
   { key: 'batch_name', label: 'Batch' },
@@ -22,98 +24,138 @@ const BATCH_COLUMNS = [
   { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
 ]
 
-// Figma: Dashboard Page (Learning Center) 08
+// The learning center's home: what needs the center's action, then its batches and requests.
 export default function LCDashboard() {
   const { user } = useAuth()
   const [programs, setPrograms] = useState(null)
-  const [summary, setSummary] = useState(null)
+  const [programsError, setProgramsError] = useState('')
+  const [summary, setSummary] = useState(null) // object | undefined (failed)
+  const [summaryError, setSummaryError] = useState('')
   const [confirming, setConfirming] = useState(null)
+  const [confirmError, setConfirmError] = useState('')
 
   const loadSummary = useCallback(
     () =>
       summaryService
         .get()
-        .then(setSummary)
-        .catch(() => setSummary(false)),
+        .then((data) => {
+          setSummaryError('')
+          setSummary(data)
+        })
+        .catch((err) => {
+          setSummaryError(err?.message || 'Something went wrong.')
+          setSummary((prev) => prev || undefined)
+        }),
+    [],
+  )
+
+  const loadPrograms = useCallback(
+    () =>
+      programService
+        .list()
+        .then((data) => {
+          setProgramsError('')
+          setPrograms(toList(data))
+        })
+        .catch((err) => {
+          setProgramsError(err?.message || 'Something went wrong.')
+          setPrograms([])
+        }),
     [],
   )
 
   useEffect(() => {
-    programService
-      .list()
-      .then((data) => setPrograms(toList(data)))
-      .catch(() => setPrograms([]))
+    loadPrograms()
     loadSummary()
-  }, [loadSummary])
+  }, [loadPrograms, loadSummary])
+
+  const retry = () => {
+    setSummary(null)
+    setPrograms(null)
+    loadPrograms()
+    loadSummary()
+  }
 
   const confirmReceived = async (id) => {
     setConfirming(id)
+    setConfirmError('')
     try {
       await inventoryService.markReceived(id)
       await loadSummary()
+    } catch (err) {
+      setConfirmError(err?.message || 'Could not confirm the delivery.')
     } finally {
       setConfirming(null)
     }
   }
 
   const loading = summary === null
-  const enrolled = programs?.reduce((sum, p) => sum + Number(p.enrollment_count || 0), 0)
+  const failed = summary === undefined
+  const enrolled = (programs ?? []).reduce((sum, p) => sum + Number(p.enrollment_count || 0), 0)
   const req = summary?.inventory_requests?.by_status ?? {}
   const alw = summary?.allowance?.by_status ?? {}
   const supplyRows = summary?.inventory_requests?.recent ?? []
   const allowanceRows = summary?.allowance?.recent ?? []
+  const rejected = countOf(req, SUPPLY.rejected) + countOf(alw, ALLOWANCE.rejected)
 
   return (
     <>
-      <PageHeader title={user?.training_center_name || 'Learning center overview'} subtitle="Your programs, student batches, and requests to the main office." />
+      <PageHeader
+        title={user?.training_center_name || 'Learning center overview'}
+        subtitle={LEARNING_CENTER_SUBTITLE}
+        actions={
+          <>
+            <Button variant="secondary" to={ROUTES.CENTER.REQUEST_ALLOWANCE}>
+              <Icon name="coins" size={16} />
+              Request allowance
+            </Button>
+            <Button to={ROUTES.CENTER.AVAILABLE_INVENTORY}>
+              <Icon name="plus" size={16} />
+              Request supplies
+            </Button>
+          </>
+        }
+      />
 
-      <div className="kpi-grid">
-        <KpiCard icon="programs" label="Programs offered" value={programs?.length} hint="NC programs at this center" loading={programs === null} />
-        <KpiCard
-          icon="users"
-          label="Trainees enrolled"
-          value={enrolled}
-          bars={programs?.map((p) => ({ label: p.course_name, value: Number(p.enrollment_count) || 0 }))}
-          hint="Per program"
-          loading={programs === null}
-        />
-        <KpiCard
-          icon="request"
-          label="Supply requests"
-          value={Object.values(req).reduce((a, b) => a + Number(b), 0)}
-          loading={loading}
-          split={[
-            { label: 'waiting', value: countOf(req, ['pending', 'in_review', 'approved']), tone: 'warning' },
-            { label: 'on the way', value: countOf(req, ['released']), tone: 'info' },
-            { label: 'received', value: countOf(req, ['received']), tone: 'success' },
-          ]}
-        />
-        <KpiCard
-          icon="coins"
-          label="Allowance requests"
-          value={Object.values(alw).reduce((a, b) => a + b.count, 0)}
-          loading={loading}
-          split={[
-            { label: 'open', value: countOf(alw, ['pending', 'budget_check', 'for_approval', 'approved']), tone: 'warning' },
-            { label: 'released', value: countOf(alw, ['released']), tone: 'success' },
-          ]}
-        />
-      </div>
+      <StatStrip
+        id="center-queue"
+        title="Your requests to the main office"
+        loading={loading}
+        error={failed ? summaryError : ''}
+        onRetry={retry}
+        cells={[
+          { label: 'Deliveries to confirm', value: countOf(req, SUPPLY.onTheWay), detail: 'Released by the main office; confirm when received', attention: true },
+          { label: 'Supply requests in progress', value: countOf(req, [...SUPPLY.toReview, ...SUPPLY.toRelease]), detail: 'Waiting for review or release' },
+          { label: 'Allowances in progress', value: countOf(alw, [...ALLOWANCE.toDecide, ...ALLOWANCE.toRelease]), detail: 'Waiting for a decision or release' },
+          { label: 'Rejected requests', value: rejected, detail: 'Read the main office’s note before resending', attention: true },
+        ]}
+      />
 
       <div className="dash-grid">
         <section className="card flush">
           <div className="card-head">
-            <h2>Current batches</h2>
+            <div>
+              <h2>Current batches</h2>
+              {!programsError && programs !== null && (
+                <p className="card-sub">
+                  {programs.length} program{programs.length === 1 ? '' : 's'} · {enrolled} trainee{enrolled === 1 ? '' : 's'} enrolled
+                </p>
+              )}
+            </div>
             <Link to={ROUTES.CENTER.PROGRAMS}>
               Programs <Icon name="arrowRight" size={15} />
             </Link>
           </div>
-          <DataTable
-            columns={BATCH_COLUMNS}
-            rows={summary?.batches ?? []}
-            loading={loading}
-            empty={{ icon: 'calendar', title: 'No batches yet', text: 'Open a batch from a program’s page.' }}
-          />
+          {failed ? (
+            <ErrorState compact what="your batches" onRetry={retry} />
+          ) : (
+            <DataTable
+              columns={BATCH_COLUMNS}
+              rows={summary?.batches ?? []}
+              loading={loading}
+              empty={{ icon: 'calendar', title: 'No batches yet', text: 'Open a batch from a program’s page.' }}
+            />
+          )}
         </section>
 
         <div className="stack">
@@ -121,24 +163,31 @@ export default function LCDashboard() {
             <div className="card-head">
               <h2>Supply requests</h2>
               <Link to={ROUTES.CENTER.AVAILABLE_INVENTORY}>
-                New <Icon name="plus" size={15} />
+                New request <Icon name="plus" size={15} />
               </Link>
             </div>
+            {confirmError && (
+              <p className="form-error" role="alert">
+                {confirmError}
+              </p>
+            )}
             {loading ? (
               <ListSkeleton />
+            ) : failed ? (
+              <ErrorState compact what="supply requests" onRetry={retry} />
             ) : supplyRows.length ? (
               <ul className="list-rows">
                 {supplyRows.map((r) => (
                   <li key={r.id} className="list-row">
                     <span>
                       <strong>
-                        {r.request_code} · {r.items_summary}
+                        <span className="code">{r.request_code}</span> · {r.items_summary}
                       </strong>
                       <small>Sent {shortDate(r.created_at)}</small>
                     </span>
                     {r.status === 'released' ? (
                       <Button variant="secondary" disabled={confirming === r.id} onClick={() => confirmReceived(r.id)}>
-                        Confirm received
+                        {confirming === r.id ? 'Confirming…' : 'Confirm received'}
                       </Button>
                     ) : (
                       <StatusBadge status={r.status} />
@@ -155,18 +204,20 @@ export default function LCDashboard() {
             <div className="card-head">
               <h2>Allowance requests</h2>
               <Link to={ROUTES.CENTER.REQUEST_ALLOWANCE}>
-                New <Icon name="plus" size={15} />
+                New request <Icon name="plus" size={15} />
               </Link>
             </div>
             {loading ? (
               <ListSkeleton />
+            ) : failed ? (
+              <ErrorState compact what="allowance requests" onRetry={retry} />
             ) : allowanceRows.length ? (
               <ul className="list-rows">
                 {allowanceRows.map((r) => (
                   <li key={r.id} className="list-row">
                     <span>
                       <strong>
-                        {r.request_code} · {r.batch_name}
+                        <span className="code">{r.request_code}</span> · {r.batch_name}
                       </strong>
                       <small>
                         {peso(r.total_amount)} · {r.student_count} trainees · sent {shortDate(r.created_at)}
@@ -185,4 +236,3 @@ export default function LCDashboard() {
     </>
   )
 }
-
