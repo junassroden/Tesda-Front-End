@@ -2,21 +2,50 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DataTable from '../../../components/DataTable/DataTable.jsx'
 import StatusBadge from '../../../components/DataTable/StatusBadge.jsx'
+import Icon from '../../../components/Icon/Icon.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
 import { ROUTES, toPath } from '../../../constants/routes.js'
 import { allowanceService } from '../../../services/allowanceService.js'
 import { exportReport } from '../../../utils/exportReport.js'
-import { peso, shortDate } from '../../../utils/format.js'
+import { fullDateTime, listTime, peso } from '../../../utils/format.js'
 
-const COLUMNS = [
-  { key: 'request_code', label: 'Request' },
-  { key: 'center_name', label: 'Learning center', render: (r) => <span className="muted">{r.center_name}</span> },
-  { key: 'batch_name', label: 'Batch', render: (r) => `${r.batch_name} · ${r.student_count} trainees` },
-  { key: 'checked', label: 'Verified', align: 'end', render: (r) => <span className="num muted">{`${r.checked_count}/${r.student_count}`}</span> },
+// Five compact columns instead of nine wide ones, so the table fits without scrolling:
+// related values share a cell (code + center, batch + verification).
+const BASE_COLUMNS = [
+  {
+    key: 'request_code',
+    label: 'Request',
+    className: 'cell-wrap',
+    render: (r) => (
+      <span className="cell-stack">
+        <strong>{r.request_code}</strong>
+        <small title={r.center_name}>{r.center_name}</small>
+      </span>
+    ),
+  },
+  {
+    key: 'batch_name',
+    label: 'Batch',
+    className: 'cell-wrap col-hide-sm',
+    render: (r) => {
+      const total = Number(r.student_count) || 0
+      const done = Number(r.checked_count) || 0
+      return (
+        <span className="cell-stack">
+          <span title={r.batch_name}>{r.batch_name}</span>
+          <small className="verify">
+            <span className="verify-meter" aria-hidden="true">
+              <span style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+            </span>
+            {done}/{total} verified
+          </small>
+        </span>
+      )
+    },
+  },
   { key: 'total_amount', label: 'Total', align: 'end', render: (r) => <span className="num">{peso(r.total_amount)}</span> },
   { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-  { key: 'created_at', label: 'Submitted', align: 'end', render: (r) => <span className="muted num">{shortDate(r.created_at)}</span> },
 ]
 
 const EXPORT_COLUMNS = [
@@ -45,6 +74,38 @@ export default function AllowanceTrackerPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const open = (r) => navigate(toPath(ROUTES.ADMIN.ALLOWANCE_CHECKLIST, { id: r.id }))
+
+  const columns = [
+    ...BASE_COLUMNS,
+    {
+      key: 'created_at',
+      label: 'Submitted',
+      align: 'end',
+      render: (r) => (
+        <span className="row-when">
+          <time className="row-time" dateTime={r.created_at} title={fullDateTime(r.created_at)}>
+            {listTime(r.created_at)}
+          </time>
+          <span className="row-hover-actions">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                open(r)
+              }}
+              aria-label={`Open checklist for ${r.request_code}`}
+              title="Open checklist"
+            >
+              <Icon name="eye" size={17} />
+            </button>
+          </span>
+        </span>
+      ),
+    },
+  ]
+
   const rows = requests.filter((r) => `${r.request_code} ${r.center_name} ${r.batch_name}`.toLowerCase().includes(search.toLowerCase()))
 
   return (
@@ -64,12 +125,11 @@ export default function AllowanceTrackerPage() {
           </p>
         )}
         <DataTable
-          columns={COLUMNS}
+          columns={columns}
           rows={rows}
           loading={loading}
-          leadingIcon="coins"
           empty={{ icon: 'coins', title: 'No allowance requests', text: 'Requests appear here when a learning center submits a batch.' }}
-          onRowClick={(r) => navigate(toPath(ROUTES.ADMIN.ALLOWANCE_CHECKLIST, { id: r.id }))}
+          rowHref={(r) => toPath(ROUTES.ADMIN.ALLOWANCE_CHECKLIST, { id: r.id })}
         />
       </Workspace>
     </>
