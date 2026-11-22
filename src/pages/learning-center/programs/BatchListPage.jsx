@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.jsx'
 import Button from '../../../components/Button/Button.jsx'
 import DataTable from '../../../components/DataTable/DataTable.jsx'
@@ -27,7 +27,6 @@ const EMPTY_FORM = { batch_name: '', start_date: '', end_date: '', capacity: 25 
 // Figma: Batch Lists 06
 export default function BatchListPage() {
   const { programId } = useParams()
-  const navigate = useNavigate()
   const [course, setCourse] = useState(null)
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -102,7 +101,7 @@ export default function BatchListPage() {
           rows={rows}
           loading={loading}
           empty={{ icon: 'calendar', title: 'No batches yet', text: 'Open a batch when a new class starts.' }}
-          onRowClick={(b) => navigate(toPath(ROUTES.CENTER.STUDENTS, { programId, batchId: b.id }))}
+          rowHref={(b) => toPath(ROUTES.CENTER.STUDENTS, { programId, batchId: b.id })}
         />
       </Workspace>
 
