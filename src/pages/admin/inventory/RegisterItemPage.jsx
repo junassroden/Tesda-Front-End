@@ -7,7 +7,7 @@ import TextArea from '../../../components/form/TextArea.jsx'
 import TextInput from '../../../components/form/TextInput.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
-import { ROUTES } from '../../../constants/routes.js'
+import { ROUTES, toPath } from '../../../constants/routes.js'
 import { inventoryService } from '../../../services/inventoryService.js'
 
 // Figma: Registration Inventory 04
@@ -16,7 +16,7 @@ export default function RegisterItemPage() {
   const [name, setName] = useState('')
   const [quantity, setQuantity] = useState('')
   const [description, setDescription] = useState('')
-  const [image, setImage] = useState(null) // not sent yet: /products has no image upload
+  const [image, setImage] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -26,7 +26,16 @@ export default function RegisterItemPage() {
     setBusy(true)
     setError('')
     try {
-      await inventoryService.create({ product_name: name.trim(), quantity: Number(quantity) || 0, description: description.trim() })
+      const { product } = await inventoryService.create({ product_name: name.trim(), quantity: Number(quantity) || 0, description: description.trim() })
+      if (image && product?.id) {
+        try {
+          await inventoryService.uploadImage(product.id, image)
+        } catch (err) {
+          // The item exists; send them to it so the photo can be added again from there.
+          navigate(toPath(ROUTES.ADMIN.INVENTORY_ITEM, { id: product.id }), { state: { photoError: err.message } })
+          return
+        }
+      }
       navigate(ROUTES.ADMIN.INVENTORY)
     } catch (err) {
       setError(err.message)
