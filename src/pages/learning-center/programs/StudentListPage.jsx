@@ -44,8 +44,13 @@ const EXPORT_COLUMNS = [
 ]
 
 // Figma: Student Lists 05
-export default function StudentListPage() {
+// Shared by the learning center and teacher portals; `portal` picks where the back links go.
+export default function StudentListPage({ portal = 'center' }) {
   const { programId, batchId } = useParams()
+  const links =
+    portal === 'teacher'
+      ? { programs: ROUTES.TEACHER.PROGRAMS, program: toPath(ROUTES.TEACHER.PROGRAM, { programId }), back: 'Program' }
+      : { programs: ROUTES.CENTER.PROGRAMS, program: toPath(ROUTES.CENTER.BATCHES, { programId }), back: 'Batches' }
   const [batch, setBatch] = useState(null)
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,14 +82,14 @@ export default function StudentListPage() {
         onExport={(format) => exportReport(format, { title: `${title} trainees`, columns: EXPORT_COLUMNS, rows })}
       />
       <Workspace
-        back={toPath(ROUTES.CENTER.BATCHES, { programId })}
-        backLabel="Batches"
+        back={links.program}
+        backLabel={links.back}
         title={title}
         description={
           <Breadcrumb
             items={[
-              { label: 'Programs', to: ROUTES.CENTER.PROGRAMS },
-              { label: batch?.course_name ?? 'Program', to: toPath(ROUTES.CENTER.BATCHES, { programId }) },
+              { label: 'Programs', to: links.programs },
+              { label: batch?.course_name ?? 'Program', to: links.program },
               { label: batch ? `${dateRange(batch.start_date, batch.end_date)} · ${batch.instructor_name || 'No teacher yet'}` : title },
             ]}
           />
