@@ -18,6 +18,11 @@ export const LEARNING_CENTER_NAV = [
   { group: 'Team', to: ROUTES.CENTER.DELIVERY_PERSONNEL, label: 'Delivery personnel', icon: 'truck' },
 ]
 
+export const TEACHER_NAV = [
+  { group: 'Overview', to: ROUTES.TEACHER.DASHBOARD, label: 'My batches', icon: 'dashboard', exact: true },
+  { group: 'Training', to: ROUTES.TEACHER.PROGRAMS, label: 'Programs', icon: 'programs' },
+]
+
 // Subtitle shown under each page title, per role.
 export const ADMIN_SUBTITLE = 'Main office records, supplies, and allowance requests from every learning center.'
 export const LEARNING_CENTER_SUBTITLE = 'Your programs, student batches, and requests to the main office.'
