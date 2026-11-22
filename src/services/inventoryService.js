@@ -1,4 +1,4 @@
-import { api } from './api.js'
+import { API_BASE, api } from './api.js'
 
 // Main office stock (/products), supply requests, and delivery personnel.
 export const inventoryService = {
@@ -7,6 +7,15 @@ export const inventoryService = {
   create: (item) => api.post('/products', item),
   update: (id, item) => api.put(`/products/${id}`, item),
   remove: (id) => api.delete(`/products/${id}`),
+
+  // Item photos. The URL includes the stored file name, so a new photo is never served from cache.
+  imageUrl: (product) => (product?.image_path ? `${API_BASE}/products/${product.id}/image?v=${encodeURIComponent(product.image_path)}` : null),
+  uploadImage: (id, file) => {
+    const form = new FormData()
+    form.append('image', file)
+    return api.upload(`/products/${id}/image`, form)
+  },
+  removeImage: (id) => api.delete(`/products/${id}/image`),
 
   // Supply requests from learning centers
   requests: () => api.get('/inventory-requests'),
