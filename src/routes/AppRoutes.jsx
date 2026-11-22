@@ -3,6 +3,7 @@ import { ROLES, ROUTES } from '../constants/routes.js'
 import AdminLayout from '../layouts/AdminLayout.jsx'
 import LearningCenterLayout from '../layouts/LearningCenterLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
+import TeacherLayout from '../layouts/TeacherLayout.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 
 import LandingPage from '../pages/public/LandingPage.jsx'
@@ -11,6 +12,7 @@ import LoginPage from '../pages/public/LoginPage.jsx'
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx'
 import DocumentsPage from '../pages/admin/documents/DocumentsPage.jsx'
 import DocumentDetailPage from '../pages/admin/documents/DocumentDetailPage.jsx'
+import InventoryItemPage from '../pages/admin/inventory/InventoryItemPage.jsx'
 import InventoryPage from '../pages/admin/inventory/InventoryPage.jsx'
 import RegisterItemPage from '../pages/admin/inventory/RegisterItemPage.jsx'
 import InventoryRequestsPage from '../pages/admin/inventory/InventoryRequestsPage.jsx'
@@ -28,7 +30,11 @@ import RequestItemPage from '../pages/learning-center/request-inventory/RequestI
 import RequestAllowancePage from '../pages/learning-center/RequestAllowancePage.jsx'
 import DeliveryPersonnelPage from '../pages/learning-center/DeliveryPersonnelPage.jsx'
 
-const { ADMIN: A, CENTER: C } = ROUTES
+import TeacherDashboard from '../pages/teacher/TeacherDashboard.jsx'
+import TeacherProgramsPage from '../pages/teacher/TeacherProgramsPage.jsx'
+import TeacherProgramPage from '../pages/teacher/TeacherProgramPage.jsx'
+
+const { ADMIN: A, CENTER: C, TEACHER: T } = ROUTES
 
 /** All routes in one place. */
 export default function AppRoutes() {
@@ -47,6 +53,7 @@ export default function AppRoutes() {
           <Route path={A.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
           <Route path={A.INVENTORY} element={<InventoryPage />} />
           <Route path={A.REGISTER_ITEM} element={<RegisterItemPage />} />
+          <Route path={A.INVENTORY_ITEM} element={<InventoryItemPage />} />
           <Route path={A.INVENTORY_REQUESTS} element={<InventoryRequestsPage />} />
           <Route path={A.INVENTORY_REQUEST_DETAIL} element={<InventoryRequestDetailPage />} />
           <Route path={A.ALLOWANCE} element={<AllowanceTrackerPage />} />
@@ -65,6 +72,15 @@ export default function AppRoutes() {
           <Route path={C.REQUEST_ITEM} element={<RequestItemPage />} />
           <Route path={C.REQUEST_ALLOWANCE} element={<RequestAllowancePage />} />
           <Route path={C.DELIVERY_PERSONNEL} element={<DeliveryPersonnelPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={[ROLES.TEACHER]} />}>
+        <Route element={<TeacherLayout />}>
+          <Route path={T.DASHBOARD} element={<TeacherDashboard />} />
+          <Route path={T.PROGRAMS} element={<TeacherProgramsPage />} />
+          <Route path={T.PROGRAM} element={<TeacherProgramPage />} />
+          <Route path={T.STUDENTS} element={<StudentListPage portal="teacher" />} />
         </Route>
       </Route>
 
