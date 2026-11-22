@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
-import EmptyState from '../../../components/EmptyState/EmptyState.jsx'
+import EmptyState, { ErrorState } from '../../../components/EmptyState/EmptyState.jsx'
 import NumberInput from '../../../components/form/NumberInput.jsx'
 import TextArea from '../../../components/form/TextArea.jsx'
 import Icon from '../../../components/Icon/Icon.jsx'
@@ -22,7 +22,9 @@ const initials = (name = '') =>
 // Figma: Request Inventory 02
 export default function RequestItemPage() {
   const { itemId } = useParams()
-  const [item, setItem] = useState(null)
+  const [item, setItem] = useState(null) // object | false (not found) | undefined (failed)
+  const [loadError, setLoadError] = useState('')
+  const [attempt, setAttempt] = useState(0)
   const [personnel, setPersonnel] = useState([])
   const [quantity, setQuantity] = useState('')
   const [deliveryId, setDeliveryId] = useState('')
@@ -35,12 +37,15 @@ export default function RequestItemPage() {
     inventoryService
       .list()
       .then((data) => setItem(toList(data).find((p) => String(p.id) === itemId) ?? false))
-      .catch(() => setItem(false))
+      .catch((err) => {
+        setLoadError(err?.message || 'Something went wrong.')
+        setItem(undefined)
+      })
     inventoryService
       .deliveryPersonnel()
       .then((data) => setPersonnel((data.personnel ?? []).filter((p) => Number(p.is_active))))
       .catch(() => setPersonnel([]))
-  }, [itemId])
+  }, [itemId, attempt])
 
   const submit = async (event) => {
     event.preventDefault()
@@ -66,7 +71,17 @@ export default function RequestItemPage() {
     <>
       <PageHeader title="Request supplies" subtitle="Tell the main office how many you need and why." />
       <Workspace back={ROUTES.CENTER.AVAILABLE_INVENTORY} backLabel="Available items" flush>
-        {item === false ? (
+        {item === undefined ? (
+          <ErrorState
+            what="this item"
+            message={loadError}
+            onRetry={() => {
+              setLoadError('')
+              setItem(null)
+              setAttempt((n) => n + 1)
+            }}
+          />
+        ) : item === false ? (
           <EmptyState icon="inventory" title="Item not found" text="It may have been removed from the main office stock." />
         ) : (
           <>
