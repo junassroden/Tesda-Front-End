@@ -34,3 +34,21 @@ const PENDING_STATES = ['pending', 'in_review', 'budget_check', 'for_approval', 
 /** Sum a by_status map's counts for the given statuses. */
 export const countOf = (byStatus = {}, statuses = PENDING_STATES) =>
   statuses.reduce((sum, s) => sum + Number(typeof byStatus[s] === 'object' ? byStatus[s]?.count : byStatus[s] || 0), 0)
+
+/** Gmail-style time for lists: "9:23 PM" today, "Nov 18" this year, "11/18/25" before that. */
+export const listTime = (value) => {
+  if (!value) return ''
+  const d = new Date(String(value).replace(' ', 'T'))
+  if (Number.isNaN(d.getTime())) return ''
+  const now = new Date()
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' })
+}
+
+/** "Nov 18, 2026, 9:23 PM", for tooltips. */
+export const fullDateTime = (value) => {
+  if (!value) return ''
+  const d = new Date(String(value).replace(' ', 'T'))
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+}
