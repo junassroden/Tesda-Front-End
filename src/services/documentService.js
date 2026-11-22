@@ -10,6 +10,9 @@ export const documentService = {
   // Archive (TESDA main office)
   list: () => api.get('/documents'),
   upload: (file) => api.upload('/documents', fileForm(file)),
+  rename: (id, name) => api.put(`/documents/${id}`, { name }),
+  remove: (id) => api.delete(`/documents/${id}`),
+  viewUrl: (id) => `${API_BASE}/documents/${id}/view`,
   downloadUrl: (id) => `${API_BASE}/documents/${id}/download`,
 
   // Archive assistant chat (history is kept in the server session)
