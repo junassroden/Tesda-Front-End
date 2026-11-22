@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
 import DataTable from '../../../components/DataTable/DataTable.jsx'
 import StatusBadge from '../../../components/DataTable/StatusBadge.jsx'
@@ -13,17 +12,49 @@ import { toList } from '../../../services/api.js'
 import { programService } from '../../../services/programService.js'
 import { exportReport } from '../../../utils/exportReport.js'
 
-const COLUMNS = [
-  { key: 'course_code', label: 'Code', render: (p) => <span className="num">{p.course_code}</span> },
+const EXPORT_COLUMNS = [
+  { key: 'course_code', label: 'Code' },
   { key: 'course_name', label: 'Program' },
+  { key: 'qualification', label: 'Level' },
+  { key: 'enrollment_count', label: 'Trainees' },
+  { key: 'status', label: 'Status' },
+]
+
+const COLUMNS = [
+  {
+    key: 'course_name',
+    label: 'Program',
+    className: 'cell-wrap',
+    render: (p) => (
+      <span className="cell-stack">
+        <strong>{p.course_name}</strong>
+        <small className="num">{p.course_code}</small>
+      </span>
+    ),
+  },
   { key: 'qualification', label: 'Level', render: (p) => <span className="muted">{p.qualification || '—'}</span> },
   { key: 'enrollment_count', label: 'Trainees', align: 'end', render: (p) => <span className="num">{p.enrollment_count ?? 0}</span> },
   { key: 'status', label: 'Status', render: (p) => <StatusBadge status={p.status} /> },
+  {
+    key: 'open',
+    label: 'Batches',
+    align: 'end',
+    render: () => (
+      <span className="row-when">
+        <span className="row-time">View batches</span>
+        <span className="row-hover-actions">
+          <span className="row-open">
+            Open
+            <Icon name="arrowRight" size={14} />
+          </span>
+        </span>
+      </span>
+    ),
+  },
 ]
 
 // Figma: Student List 3
 export default function ProgramListPage() {
-  const navigate = useNavigate()
   const [programs, setPrograms] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -48,7 +79,7 @@ export default function ProgramListPage() {
         search={search}
         onSearch={setSearch}
         searchPlaceholder="Search code or name"
-        onExport={(format) => exportReport(format, { title: 'Programs', columns: COLUMNS.slice(0, 3), rows: filtered })}
+        onExport={(format) => exportReport(format, { title: 'Programs', columns: EXPORT_COLUMNS, rows: filtered })}
       />
       <Workspace
         title="All programs"
@@ -70,7 +101,7 @@ export default function ProgramListPage() {
           rows={rows}
           loading={loading}
           empty={search ? { icon: 'search', title: 'No matches', text: `No program matches “${search}”.` } : { icon: 'programs', title: 'No programs yet', text: 'Add your first NC program to start opening batches.' }}
-          onRowClick={(p) => navigate(toPath(ROUTES.CENTER.BATCHES, { programId: p.id }))}
+          rowHref={(p) => toPath(ROUTES.CENTER.BATCHES, { programId: p.id })}
         />
         <Pagination page={page} pageCount={pageCount} onChange={setPage} />
       </Workspace>
