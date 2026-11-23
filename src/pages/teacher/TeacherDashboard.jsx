@@ -57,7 +57,7 @@ export default function TeacherDashboard() {
 
   return (
     <>
-      <PageHeader title={firstName ? `Hello, ${firstName}` : 'My batches'} subtitle="The batches you handle at your learning center. Open one to see its trainees." />
+      <PageHeader title={firstName ? `Hello, ${firstName}` : 'My batches'} subtitle="The batches the learning center assigned to you. Open one to go to its classroom." />
 
       <StatStrip
         columns={3}
@@ -79,7 +79,7 @@ export default function TeacherDashboard() {
             rows={batches ?? []}
             loading={loading}
             empty={{ icon: 'calendar', title: 'No batches yet', text: 'Batches you open, or that your center assigns to you, show up here. Open one from a program.' }}
-            rowHref={(b) => toPath(ROUTES.TEACHER.STUDENTS, { programId: b.course_id, batchId: b.id })}
+            rowHref={(b) => toPath(ROUTES.TEACHER.CLASSROOM, { batchId: b.id })}
           />
         )}
       </Workspace>
