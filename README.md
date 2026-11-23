@@ -48,3 +48,16 @@ Pages marked "Coming soon" (allowance, inventory requests, requirements, deliver
 password reset) have no backend yet. Their services in `src/services` return a
 "not available yet" error until the API exists. The delivery role does not exist
 in the backend, so nobody can open `/delivery` yet.
+
+## Training management
+
+- **Learning center**: Courses → a course page (Active and upcoming / History tabs) → a batch page
+  (trainees, sessions and attendance, activity; edit, extend, suspend, complete, cancel; enroll,
+  transfer, remove). Batch history and Student records (document review, print sheets) are in the sidebar.
+- **Teacher**: Classrooms, one per assigned batch: Stream, Classwork, People, Grades and Attendance.
+- **Student** (`/student`): My training (schedule, progress, attendance), Classrooms, My documents, Profile.
+- **Print sheets** open in a new tab under `/print/...` without the portal frame.
+
+Services are in `src/services/trainingService.js`, and shared parts are in `src/components/training/`.
+Styles are in `src/styles/training.css`. Run `Back-End/database/training_management.sql` first
+(see `Back-End/database/README.md`).
