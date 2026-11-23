@@ -10,6 +10,8 @@ const SEGMENT_LABELS = {
   batches: 'Batches',
   students: 'Trainees',
   items: 'Item',
+  edit: 'Edit',
+  classrooms: 'Classrooms',
 }
 
 const dateFormat = new Intl.DateTimeFormat('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
