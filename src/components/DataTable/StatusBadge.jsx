@@ -21,6 +21,25 @@ const TONES = {
   completed: 'neutral',
   closed: 'neutral',
   archived: 'neutral',
+  // Batches
+  suspended: 'warning',
+  needs_review: 'danger',
+  transferred: 'neutral',
+  // Documents
+  not_submitted: 'neutral',
+  submitted: 'info',
+  under_review: 'info',
+  verified: 'success',
+  // Classroom and attendance
+  graded: 'success',
+  turned_in: 'info',
+  missing: 'danger',
+  assigned: 'neutral',
+  present: 'success',
+  late: 'warning',
+  absent: 'danger',
+  excused: 'neutral',
+  held: 'success',
 }
 
 const keyOf = (status) => String(status).trim().toLowerCase().replace(/[\s-]+/g, '_')
