@@ -15,7 +15,6 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { teacherService } from '../../services/teacherService.js'
 import { dateRange, listTime } from '../../utils/format.js'
 
-const EMPTY_BATCH = { batch_name: '', start_date: '', end_date: '', capacity: 25 }
 const EMPTY_MATERIAL = { title: '', description: '', resource_url: '' }
 
 const BATCH_COLUMNS = [
@@ -49,11 +48,6 @@ export default function TeacherProgramPage() {
   const [schedule, setSchedule] = useState({ class_days: '', class_schedule: '', course_outline: '' })
   const [savingSchedule, setSavingSchedule] = useState(false)
 
-  const [batchOpen, setBatchOpen] = useState(false)
-  const [batch, setBatch] = useState(EMPTY_BATCH)
-  const [batchError, setBatchError] = useState('')
-  const [savingBatch, setSavingBatch] = useState(false)
-
   const [materialOpen, setMaterialOpen] = useState(false)
   const [material, setMaterial] = useState(EMPTY_MATERIAL)
   const [materialError, setMaterialError] = useState('')
@@ -84,7 +78,7 @@ export default function TeacherProgramPage() {
   const course = data?.course
   const materials = data?.materials ?? []
   const roster = data?.roster ?? []
-  const mine = (batches ?? []).filter((b) => b.instructor_name && b.instructor_name === user?.full_name).length
+  const mine = (batches ?? []).filter((b) => Number(b.instructor_id) === Number(user?.id)).length
 
   const startEdit = () => {
     setSchedule({ class_days: course.class_days ?? '', class_schedule: course.class_schedule ?? '', course_outline: course.course_outline ?? '' })
@@ -108,23 +102,6 @@ export default function TeacherProgramPage() {
     }
   }
 
-  const saveBatch = async (event) => {
-    event.preventDefault()
-    setSavingBatch(true)
-    setBatchError('')
-    try {
-      await teacherService.openBatch(programId, { ...batch, capacity: Number(batch.capacity) || 25 })
-      setBatchOpen(false)
-      setBatch(EMPTY_BATCH)
-      setNotice('Batch opened. You are its teacher.')
-      load()
-    } catch (err) {
-      setBatchError(err.message)
-    } finally {
-      setSavingBatch(false)
-    }
-  }
-
   const saveMaterial = async (event) => {
     event.preventDefault()
     setSavingMaterial(true)
@@ -143,7 +120,6 @@ export default function TeacherProgramPage() {
   }
 
   const bind = (setter, values) => (key) => ({ value: values[key], onChange: (e) => setter((v) => ({ ...v, [key]: e.target.value })) })
-  const batchField = bind(setBatch, batch)
   const materialField = bind(setMaterial, material)
   const scheduleField = bind(setSchedule, schedule)
 
@@ -190,21 +166,15 @@ export default function TeacherProgramPage() {
         <div className="teacher-main">
           <Workspace
             title="Batches"
-            description={batches === null ? 'Loading…' : `${batches.length} in this program · ${mine} yours`}
-            actions={
-              <Button onClick={() => setBatchOpen(true)} disabled={!course}>
-                <Icon name="plus" size={17} />
-                Open batch
-              </Button>
-            }
+            description={batches === null ? 'Loading…' : `${batches.length} in this course · ${mine} assigned to you. The learning center opens batches and enrolls trainees.`}
             flush
           >
             <DataTable
               columns={BATCH_COLUMNS}
               rows={batches ?? []}
               loading={batches === null}
-              empty={{ icon: 'calendar', title: 'No batches yet', text: 'Open a batch when a new class starts. You will be its teacher.' }}
-              rowHref={(b) => toPath(ROUTES.TEACHER.STUDENTS, { programId, batchId: b.id })}
+              empty={{ icon: 'calendar', title: 'No batches yet', text: 'The learning center opens batches for this course and assigns their teachers.' }}
+              rowHref={(b) => (Number(b.instructor_id) === Number(user?.id) ? toPath(ROUTES.TEACHER.CLASSROOM, { batchId: b.id }) : toPath(ROUTES.TEACHER.STUDENTS, { programId, batchId: b.id }))}
             />
           </Workspace>
 
@@ -305,33 +275,6 @@ export default function TeacherProgramPage() {
           </section>
         </aside>
       </div>
-
-      <Modal
-        open={batchOpen}
-        title="Open a batch"
-        onClose={() => setBatchOpen(false)}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setBatchOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" form="teacher-batch-form" disabled={savingBatch}>
-              {savingBatch ? 'Saving…' : 'Open batch'}
-            </Button>
-          </>
-        }
-      >
-        <form id="teacher-batch-form" className="form-fields" onSubmit={saveBatch}>
-          {batchError && <p className="form-error">{batchError}</p>}
-          <TextInput id="batch_name" label="Batch name" placeholder={`e.g. ${course?.course_code ?? 'CSS'} Batch 2027-01`} required {...batchField('batch_name')} />
-          <div className="form-row even">
-            <TextInput id="start_date" label="Start date" type="date" {...batchField('start_date')} />
-            <TextInput id="end_date" label="End date" type="date" {...batchField('end_date')} />
-          </div>
-          <TextInput id="capacity" label="Capacity" type="number" min={1} max={500} {...batchField('capacity')} />
-          <p className="alw-help">You will be set as this batch&apos;s teacher.</p>
-        </form>
-      </Modal>
 
       <Modal
         open={materialOpen}
