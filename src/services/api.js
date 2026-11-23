@@ -4,10 +4,11 @@
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '/api/app'
 
 export class ApiError extends Error {
-  constructor(message, status, errors = []) {
+  constructor(message, status, errors = [], data = null) {
     super(message)
     this.status = status
     this.errors = errors.length ? errors : [message]
+    this.data = data // the full error body, e.g. { error, duplicates }
   }
 }
 
@@ -48,7 +49,7 @@ export async function request(path, { method = 'GET', body, form } = {}) {
     if ((response.status === 502 || response.status === 504) && !data?.error) {
       throw new ApiError('The server could not be reached. Check that the backend is running.', response.status)
     }
-    throw new ApiError(data?.error || `Request failed (${response.status}).`, response.status, data?.errors || [])
+    throw new ApiError(data?.error || `Request failed (${response.status}).`, response.status, data?.errors || [], data)
   }
   return data
 }
