@@ -14,14 +14,22 @@ export const ROUTES = {
     INVENTORY_REQUEST_DETAIL: '/admin/inventory/requests/:id',
     ALLOWANCE: '/admin/allowance',
     ALLOWANCE_CHECKLIST: '/admin/allowance/:id',
+    TRAINING: '/admin/training',
+    TRAINING_BATCH: '/admin/training/batches/:batchId',
   },
 
   CENTER: {
     DASHBOARD: '/center',
+    // "Programs" in the URL, "Courses" on screen: each course page holds its batches.
     PROGRAMS: '/center/programs',
     REGISTER_PROGRAM: '/center/programs/register',
+    EDIT_PROGRAM: '/center/programs/:programId/edit',
     BATCHES: '/center/programs/:programId/batches',
-    STUDENTS: '/center/programs/:programId/batches/:batchId/students',
+    BATCH: '/center/programs/:programId/batches/:batchId',
+    STUDENTS: '/center/programs/:programId/batches/:batchId/students', // older links; opens the batch page
+    HISTORY: '/center/history',
+    STUDENT_RECORDS: '/center/students',
+    STUDENT_RECORD: '/center/students/:studentId',
     AVAILABLE_INVENTORY: '/center/request-inventory',
     REQUEST_ITEM: '/center/request-inventory/:itemId',
     REQUEST_ALLOWANCE: '/center/request-allowance',
@@ -33,6 +41,22 @@ export const ROUTES = {
     PROGRAMS: '/teacher/programs',
     PROGRAM: '/teacher/programs/:programId',
     STUDENTS: '/teacher/programs/:programId/batches/:batchId',
+    CLASSROOMS: '/teacher/classrooms',
+    CLASSROOM: '/teacher/classrooms/:batchId',
+  },
+
+  STUDENT: {
+    DASHBOARD: '/student',
+    CLASSROOMS: '/student/classrooms',
+    CLASSROOM: '/student/classrooms/:batchId',
+    DOCUMENTS: '/student/documents',
+    PROFILE: '/student/profile',
+  },
+
+  // Print-ready sheets (no sidebar). kind: info | checklist | packet
+  PRINT: {
+    STUDENT: '/print/students/:studentId/:kind',
+    BATCH: '/print/batches/:batchId',
   },
 }
 
@@ -46,6 +70,7 @@ export const ROLES = {
   ADMIN: 'admin',
   LEARNING_CENTER: 'center_admin',
   TEACHER: 'instructor',
+  STUDENT: 'student',
 }
 
 /** Where each role lands after logging in. */
@@ -53,4 +78,5 @@ export const HOME_BY_ROLE = {
   [ROLES.ADMIN]: ROUTES.ADMIN.DASHBOARD,
   [ROLES.LEARNING_CENTER]: ROUTES.CENTER.DASHBOARD,
   [ROLES.TEACHER]: ROUTES.TEACHER.DASHBOARD,
+  [ROLES.STUDENT]: ROUTES.STUDENT.DASHBOARD,
 }
