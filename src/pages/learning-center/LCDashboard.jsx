@@ -8,7 +8,7 @@ import Icon from '../../components/Icon/Icon.jsx'
 import PageHeader from '../../components/PageHeader/PageHeader.jsx'
 import StatStrip from '../../components/StatStrip/StatStrip.jsx'
 import { LEARNING_CENTER_SUBTITLE } from '../../constants/navItems.js'
-import { ROUTES } from '../../constants/routes.js'
+import { ROUTES, toPath } from '../../constants/routes.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { toList } from '../../services/api.js'
 import { inventoryService } from '../../services/inventoryService.js'
@@ -16,12 +16,13 @@ import { programService } from '../../services/programService.js'
 import { summaryService } from '../../services/summaryService.js'
 import { countOf, peso, shortDate } from '../../utils/format.js'
 import { ALLOWANCE, SUPPLY } from '../../utils/requestStatus.js'
+import { batchBadge } from '../../utils/training.js'
 
 const BATCH_COLUMNS = [
   { key: 'batch_name', label: 'Batch' },
-  { key: 'course_name', label: 'Program', render: (r) => <span className="muted">{r.course_name}</span> },
+  { key: 'course_name', label: 'Course', render: (r) => <span className="muted">{r.course_name}</span> },
   { key: 'enrolled', label: 'Trainees', align: 'end', render: (r) => <span className="num">{r.enrolled}</span> },
-  { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+  { key: 'status', label: 'Status', render: (r) => <StatusBadge status={batchBadge(r)} /> },
 ]
 
 // The learning center's home: what needs the center's action, then its batches and requests.
@@ -118,6 +119,20 @@ export default function LCDashboard() {
       />
 
       <StatStrip
+        id="training-queue"
+        title="Training that needs you"
+        loading={loading}
+        error={failed ? summaryError : ''}
+        onRetry={retry}
+        cells={[
+          { label: 'Batches to review', value: summary?.training?.needs_review ?? 0, detail: 'Past their end date: extend or confirm completion', attention: true, to: ROUTES.CENTER.PROGRAMS },
+          { label: 'Suspended batches', value: summary?.training?.suspended ?? 0, detail: 'Training paused until resumed', attention: true },
+          { label: 'Documents to review', value: summary?.training?.pending_documents ?? 0, detail: 'Submitted by students', attention: true, to: ROUTES.CENTER.STUDENT_RECORDS },
+          { label: 'Ongoing batches', value: summary?.training?.ongoing ?? 0, detail: 'Batch history keeps the finished ones', to: ROUTES.CENTER.HISTORY },
+        ]}
+      />
+
+      <StatStrip
         id="center-queue"
         title="Your requests to the main office"
         loading={loading}
@@ -138,12 +153,12 @@ export default function LCDashboard() {
               <h2>Current batches</h2>
               {!programsError && programs !== null && (
                 <p className="card-sub">
-                  {programs.length} program{programs.length === 1 ? '' : 's'} · {enrolled} trainee{enrolled === 1 ? '' : 's'} enrolled
+                  {programs.length} course{programs.length === 1 ? '' : 's'} · {enrolled} trainee{enrolled === 1 ? '' : 's'} enrolled
                 </p>
               )}
             </div>
             <Link to={ROUTES.CENTER.PROGRAMS}>
-              Programs <Icon name="arrowRight" size={15} />
+              Courses <Icon name="arrowRight" size={15} />
             </Link>
           </div>
           {failed ? (
@@ -151,9 +166,10 @@ export default function LCDashboard() {
           ) : (
             <DataTable
               columns={BATCH_COLUMNS}
-              rows={summary?.batches ?? []}
+              rows={(summary?.batches ?? []).filter((b) => !b.in_history)}
               loading={loading}
-              empty={{ icon: 'calendar', title: 'No batches yet', text: 'Open a batch from a program’s page.' }}
+              empty={{ icon: 'calendar', title: 'No active batches', text: 'Open a batch from a course’s page. Finished batches move to Batch history.' }}
+              rowHref={(b) => toPath(ROUTES.CENTER.BATCH, { programId: b.course_id, batchId: b.id })}
             />
           )}
         </section>
