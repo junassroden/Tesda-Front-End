@@ -4,12 +4,35 @@
 import { countOf } from './format.js'
 
 export const SUPPLY = {
-  toReview: ['pending', 'in_review'],
-  toRelease: ['approved'],
-  onTheWay: ['released'],
-  received: ['received'],
+  toReview: ['pending'],
+  toRelease: ['approved', 'processing', 'ready_for_delivery'],
+  onTheWay: ['in_transit', 'delivered'],
+  received: ['completed'],
   rejected: ['rejected'],
+  discrepancy: ['discrepancy'],
 }
+
+/** On-screen names of inventory request statuses ("rejected" is shown as Disapproved). */
+export const REQUEST_STATUS_LABEL = {
+  draft: 'Draft',
+  pending: 'Pending approval',
+  approved: 'Approved',
+  rejected: 'Disapproved',
+  processing: 'Processing',
+  ready_for_delivery: 'Ready for delivery',
+  in_transit: 'In transit',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  discrepancy: 'Discrepancy reported',
+  cancelled: 'Cancelled',
+}
+
+/** Delivery and QR code statuses as delivery personnel see them. */
+export const DELIVERY_STATUS_LABEL = { ready: 'Awaiting release', in_transit: 'In transit', delivered: 'Delivered', cancelled: 'Cancelled' }
+export const QR_STATUS_LABEL = { active: 'Active', used: 'Used', cancelled: 'Cancelled' }
+
+/** The path of a request, for progress steppers. */
+export const REQUEST_STEPS = ['pending', 'approved', 'processing', 'ready_for_delivery', 'in_transit', 'delivered', 'completed']
 
 export const ALLOWANCE = {
   toDecide: ['pending', 'budget_check', 'for_approval'],
