@@ -1,15 +1,20 @@
+import { usePortalName } from '../../context/PortalContext.jsx'
 import ExportMenu from '../ExportMenu/ExportMenu.jsx'
 import SearchBar from '../SearchBar/SearchBar.jsx'
 
 /**
- * Title + subtitle on the left; search, actions and "Export report" on the right.
+ * Gold label (the portal's name unless `eyebrow` is given), serif title and subtitle on the left;
+ * search, actions and "Export report" on the right.
  * Pass `onSearch` to show the search bar and `onExport(format)` to show the export menu.
  */
 export default function PageHeader({ title, subtitle, eyebrow, search, onSearch, searchPlaceholder = 'Search', onExport, actions }) {
+  const portal = usePortalName()
+  const label = eyebrow ?? portal
+
   return (
     <header className="page-header">
-      <div>
-        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+      <div className="page-header-text">
+        {label && <span className="eyebrow">{label}</span>}
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
       </div>
