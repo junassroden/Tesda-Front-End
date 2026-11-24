@@ -40,6 +40,15 @@ const TONES = {
   absent: 'danger',
   excused: 'neutral',
   held: 'success',
+  // Inventory requests and deliveries
+  draft: 'neutral',
+  processing: 'info',
+  ready_for_delivery: 'info',
+  ready: 'info',
+  in_transit: 'warning',
+  delivered: 'success',
+  discrepancy: 'danger',
+  used: 'neutral',
 }
 
 const keyOf = (status) => String(status).trim().toLowerCase().replace(/[\s-]+/g, '_')
@@ -50,9 +59,9 @@ const labelOf = (status) => {
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 }
 
-/** Tinted status badge with a dot. */
-export default function StatusBadge({ status }) {
+/** Tinted status badge with a dot. `label` overrides the text (e.g. rejected -> "Disapproved"). */
+export default function StatusBadge({ status, label }) {
   if (!status) return <span className="muted">—</span>
   const tone = TONES[keyOf(status)] ?? 'neutral'
-  return <span className={`status-badge status-${tone}`}>{labelOf(status)}</span>
+  return <span className={`status-badge status-${tone}`}>{label ?? labelOf(status)}</span>
 }
