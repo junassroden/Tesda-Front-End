@@ -1,9 +1,12 @@
 import { useLocation } from 'react-router-dom'
-import mark from '../../assets/images/tesda-mark.png'
+import logo from '../../assets/images/tesda-logo.png'
 import { useAuth } from '../../hooks/useAuth.js'
 import SidebarItem from './SidebarItem.jsx'
 
-/** Office header and grouped nav links. The signed-in user lives in the top bar. items: [{ group, to, label, icon, exact? }] */
+/**
+ * Brand block (the index header's logo block), the portal's name and office, and grouped nav links.
+ * The signed-in user lives in the top bar. items: [{ group, to, label, icon, exact? }]
+ */
 export default function Sidebar({ title, items }) {
   const { user } = useAuth()
   const { pathname } = useLocation()
@@ -25,11 +28,14 @@ export default function Sidebar({ title, items }) {
     <aside className="sidebar">
       <div className="org">
         <span className="org-logo">
-          <img src={mark} alt="TESDA" />
+          <img src={logo} alt="TESDA" />
         </span>
         <div className="org-text">
+          <span className="org-brand">TESDA NEXUS</span>
           <strong>{title}</strong>
-          <span title={office}>{office}</span>
+          <span className="org-office" title={office}>
+            {office}
+          </span>
         </div>
       </div>
 
@@ -45,7 +51,7 @@ export default function Sidebar({ title, items }) {
       </nav>
 
       <div className="sidebar-foot">
-        <p className="sidebar-meta">TESDA NEXUS · Region IV-B (MIMAROPA)</p>
+        <p className="sidebar-meta">Region IV-B · MIMAROPA</p>
       </div>
     </aside>
   )
