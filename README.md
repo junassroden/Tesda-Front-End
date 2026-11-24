@@ -44,10 +44,8 @@ src/
 Each role has its own URL prefix: `/admin`, `/center`, `/instructor`, `/student`,
 `/delivery`. `/dashboard` sends a signed-in user to their own home.
 
-Pages marked "Coming soon" (allowance, inventory requests, requirements, delivery,
-password reset) have no backend yet. Their services in `src/services` return a
-"not available yet" error until the API exists. The delivery role does not exist
-in the backend, so nobody can open `/delivery` yet.
+Pages marked "Coming soon" (requirements, password reset) have no backend yet. Their
+services in `src/services` return a "not available yet" error until the API exists.
 
 ## Training management
 
@@ -61,3 +59,16 @@ in the backend, so nobody can open `/delivery` yet.
 Services are in `src/services/trainingService.js`, and shared parts are in `src/components/training/`.
 Styles are in `src/styles/training.css`. Run `Back-End/database/training_management.sql` first
 (see `Back-End/database/README.md`).
+
+## Inventory requests and deliveries
+
+- **Learning center**: Inventory requests (In progress, Delivery tracking, Drafts and History tabs), a new
+  request page where you write or upload the letter, add photos and list items, and a request page where you confirm receipt or report a discrepancy.
+- **Main office admin**: Request approvals (approve, disapprove, resolve discrepancies) and Main office staff.
+- **Inventory personnel** (`/inventory`): Request processing. Check stock, generate the QR code and print its label.
+- **Delivery personnel** (`/delivery`): Delivery management, the QR scanner (camera, with a manual reference
+  number when there is no camera) and Delivery history.
+- Every portal has a notification bell in the top bar.
+
+The code is in `src/services/requestService.js`, `src/components/requests/` and `src/styles/requests.css`. QR codes
+are drawn with `qrcode` and read with `jsqr`. DOCX letters are previewed with `mammoth`.
