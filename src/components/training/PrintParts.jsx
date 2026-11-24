@@ -15,7 +15,7 @@ export function PrintToolbar({ title, waitFor = 0 }) {
   )
 }
 
-export function PrintHeader({ center, address, title }) {
+export function PrintHeader({ center, address, title, children }) {
   return (
     <header className="print-head">
       <img src={seal} alt="" />
@@ -25,6 +25,7 @@ export function PrintHeader({ center, address, title }) {
         {address && <span>{address}</span>}
       </div>
       <h1>{title}</h1>
+      {children && <div className="print-seal">{children}</div>}
     </header>
   )
 }
