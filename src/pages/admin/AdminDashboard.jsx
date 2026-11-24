@@ -13,15 +13,16 @@ import { documentService } from '../../services/documentService.js'
 import { inventoryService } from '../../services/inventoryService.js'
 import { summaryService } from '../../services/summaryService.js'
 import { countOf, peso, shortDate, timeAgo } from '../../utils/format.js'
-import { ALLOWANCE, ALLOWANCE_UNRELEASED, SUPPLY, describeParts, splitByStatus } from '../../utils/requestStatus.js'
+import { ALLOWANCE, ALLOWANCE_UNRELEASED, REQUEST_STATUS_LABEL, SUPPLY, describeParts, splitByStatus } from '../../utils/requestStatus.js'
 
 const ACTIVITY_ICON = { inventory_request: 'request', allowance_request: 'coins', batch: 'programs', delivery_personnel: 'truck' }
 
 const SUPPLY_PARTS = [
   { label: 'to review', statuses: SUPPLY.toReview },
-  { label: 'to release', statuses: SUPPLY.toRelease },
+  { label: 'being prepared', statuses: SUPPLY.toRelease },
   { label: 'released', statuses: [...SUPPLY.onTheWay, ...SUPPLY.received] },
-  { label: 'rejected', statuses: SUPPLY.rejected },
+  { label: 'disapproved', statuses: SUPPLY.rejected },
+  { label: 'with discrepancy', statuses: SUPPLY.discrepancy },
 ]
 const ALLOWANCE_PARTS = [
   { label: 'to decide', statuses: ALLOWANCE.toDecide },
@@ -95,8 +96,8 @@ export default function AdminDashboard() {
         error={summary.error}
         onRetry={load}
         cells={[
-          { label: 'Supply requests to review', value: countOf(req, SUPPLY.toReview), detail: 'Pending or in review', to: ROUTES.ADMIN.INVENTORY_REQUESTS, attention: true },
-          { label: 'Supply requests to release', value: countOf(req, SUPPLY.toRelease), detail: 'Approved, not yet released', to: ROUTES.ADMIN.INVENTORY_REQUESTS, attention: true },
+          { label: 'Inventory requests to review', value: countOf(req, SUPPLY.toReview), detail: 'Pending approval', to: ROUTES.ADMIN.INVENTORY_REQUESTS, attention: true },
+          { label: 'Discrepancies to resolve', value: countOf(req, SUPPLY.discrepancy), detail: 'Received quantities differ', to: ROUTES.ADMIN.INVENTORY_REQUESTS, attention: true },
           { label: 'Allowances to decide', value: countOf(alw, ALLOWANCE.toDecide), detail: 'Pending, budget check, or for approval', to: ROUTES.ADMIN.ALLOWANCE, attention: true },
           { label: 'Allowances to release', value: countOf(alw, ALLOWANCE.toRelease), detail: 'Approved, not yet released', to: ROUTES.ADMIN.ALLOWANCE, attention: true },
         ]}
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
         <div className="stack">
           <section className="card">
             <div className="card-head">
-              <h2>Recent supply requests</h2>
+              <h2>Recent inventory requests</h2>
               <Link to={ROUTES.ADMIN.INVENTORY_REQUESTS}>
                 Review all <Icon name="arrowRight" size={15} />
               </Link>
@@ -124,10 +125,10 @@ export default function AdminDashboard() {
                         <span className="code">{r.request_code}</span> · {r.items_summary || 'No items'}
                       </strong>
                       <small>
-                        {r.center_name} · {shortDate(r.created_at)}
+                        {r.center_name} · {shortDate(r.submitted_at || r.created_at)}
                       </small>
                     </Link>
-                    <StatusBadge status={r.status} />
+                    <StatusBadge status={r.status} label={REQUEST_STATUS_LABEL[r.status]} />
                   </li>
                 ))}
               </ul>
