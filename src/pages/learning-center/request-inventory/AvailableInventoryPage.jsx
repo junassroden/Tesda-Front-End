@@ -5,7 +5,7 @@ import InventoryCard, { InventoryCardSkeleton } from '../../../components/Invent
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Pagination from '../../../components/Pagination/Pagination.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
-import { ROUTES, toPath } from '../../../constants/routes.js'
+import { ROUTES } from '../../../constants/routes.js'
 import { usePagination } from '../../../hooks/usePagination.js'
 import { toList } from '../../../services/api.js'
 import { inventoryService } from '../../../services/inventoryService.js'
@@ -35,7 +35,7 @@ export default function AvailableInventoryPage() {
 
   return (
     <>
-      <PageHeader title="Request supplies" subtitle="Pick an item from the main office stock, then say how many you need and who will pick it up." search={search} onSearch={setSearch} searchPlaceholder="Search items" />
+      <PageHeader title="Main office stock" subtitle="What the main office has on hand. Open an item to start an inventory request with it." search={search} onSearch={setSearch} searchPlaceholder="Search items" />
       <Workspace title="Available at the main office" description={loading ? 'Loading items…' : `${items.filter((p) => qtyOf(p) > 0).length} of ${items.length} items in stock`}>
         {error && (
           <p className="form-error" role="alert">
@@ -55,7 +55,7 @@ export default function AvailableInventoryPage() {
                 key={p.id}
                 item={p}
                 meta={qtyOf(p) > 0 ? `${qtyOf(p).toLocaleString()} ${p.unit || 'pc'} available` : 'None available right now'}
-                onOpen={() => navigate(toPath(ROUTES.CENTER.REQUEST_ITEM, { itemId: p.id }))}
+                onOpen={() => navigate(`${ROUTES.CENTER.NEW_INVENTORY_REQUEST}?item=${p.id}`)}
               />
             ))}
           </div>
