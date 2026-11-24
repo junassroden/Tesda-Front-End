@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Icon from '../Icon/Icon.jsx'
 import AccountMenu from './AccountMenu.jsx'
+import NotificationBell from './NotificationBell.jsx'
 
 // Labels for the sub-pages that follow a nav section in the URL.
 const SEGMENT_LABELS = {
@@ -11,6 +12,8 @@ const SEGMENT_LABELS = {
   students: 'Trainees',
   items: 'Item',
   edit: 'Edit',
+  new: 'New request',
+  deliveries: 'Delivery',
   classrooms: 'Classrooms',
 }
 
@@ -68,6 +71,8 @@ export default function Topbar({ portal, home, items }) {
           <Icon name="calendar" size={15} />
           {today}
         </span>
+        <span className="topbar-dash" aria-hidden="true" />
+        <NotificationBell />
         <span className="topbar-divider" aria-hidden="true" />
         <AccountMenu />
       </div>
