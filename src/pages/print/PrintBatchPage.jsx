@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ErrorState } from '../../components/EmptyState/EmptyState.jsx'
 import { PrintHeader, PrintToolbar } from '../../components/training/PrintParts.jsx'
+import SealQr from '../../components/ledger/SealQr.jsx'
 import { batchService } from '../../services/trainingService.js'
 import { shortDate } from '../../utils/format.js'
 import { daysLabel, hoursLabel, modeLabel, sessionLabel, trainingState } from '../../utils/training.js'
@@ -34,7 +35,9 @@ export default function PrintBatchPage() {
   return (
     <div className="print-doc">
       <PrintToolbar title="Batch student records" />
-      <PrintHeader center={b.training_center_name} title="Batch student records" />
+      <PrintHeader center={b.training_center_name} title="Batch student records">
+        <SealQr kind="batch_records" entityId={b.id} />
+      </PrintHeader>
 
       <section className="print-section">
         <h2>
