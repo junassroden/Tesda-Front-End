@@ -1,184 +1,155 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
-import DataTable from '../../../components/DataTable/DataTable.jsx'
-import StatusBadge from '../../../components/DataTable/StatusBadge.jsx'
-import EmptyState, { ErrorState } from '../../../components/EmptyState/EmptyState.jsx'
+import { ErrorState } from '../../../components/EmptyState/EmptyState.jsx'
 import TextArea from '../../../components/form/TextArea.jsx'
 import Icon from '../../../components/Icon/Icon.jsx'
 import PageHeader from '../../../components/PageHeader/PageHeader.jsx'
 import Workspace from '../../../components/Workspace/Workspace.jsx'
+import RequestOverview from '../../../components/requests/RequestOverview.jsx'
+import ConfirmDialog from '../../../components/training/ConfirmDialog.jsx'
 import { ROUTES } from '../../../constants/routes.js'
-import { inventoryService } from '../../../services/inventoryService.js'
-import { shortDate } from '../../../utils/format.js'
+import { requestService } from '../../../services/requestService.js'
+import { REQUEST_STATUS_LABEL } from '../../../utils/requestStatus.js'
 
-const ITEM_COLUMNS = [
-  { key: 'product_name', label: 'Item' },
-  { key: 'quantity_requested', label: 'Requested', align: 'end', render: (r) => <span className="num">{r.quantity_requested}</span> },
-  { key: 'quantity_approved', label: 'Approved', align: 'end', render: (r) => <span className="num">{r.quantity_approved ?? '—'}</span> },
-  {
-    key: 'stock',
-    label: 'In stock',
-    align: 'end',
-    render: (r) => <span className={Number(r.stock) < Number(r.quantity_requested) ? 'num low-stock' : 'num muted'}>{r.stock}</span>,
-  },
-]
-
-// Figma: Inventory Request Mesage 12
+/** Request Review: the main office administrator approves or disapproves, and resolves discrepancies. */
 export default function InventoryRequestDetailPage() {
   const { id } = useParams()
-  const [data, setData] = useState(null) // { request, items } | false (not found) | undefined (failed)
-  const [loadError, setLoadError] = useState('')
-  const [remarks, setRemarks] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState(null)
+  const [data, setData] = useState(null)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
   const load = useCallback(
     () =>
-      inventoryService
-        .request(id)
+      requestService
+        .get(id)
         .then((d) => {
-          setLoadError('')
+          setError('')
           setData(d)
         })
-        .catch((err) => {
-          if (err?.status === 404) return setData(false)
-          setLoadError(err?.message || 'Something went wrong.')
-          setData((prev) => prev || undefined)
-        }),
+        .catch((err) => setError(err.message)),
     [id],
   )
-
   useEffect(() => {
     load()
   }, [load])
 
-  const act = async (fn, success) => {
-    setBusy(true)
-    setMessage(null)
-    try {
-      await fn()
-      setMessage({ ok: true, text: success })
-      setRemarks('')
-      await load()
-    } catch (err) {
-      setMessage({ ok: false, text: err.message })
-    } finally {
-      setBusy(false)
-    }
+  const done = (d) => {
+    setData(d)
+    setNotice(d.message)
   }
 
+  if (error && !data) {
+    return (
+      <>
+        <PageHeader title="Inventory request" />
+        <Workspace back={ROUTES.ADMIN.INVENTORY_REQUESTS} backLabel="Request approvals">
+          <ErrorState what="this request" message={error} onRetry={load} />
+        </Workspace>
+      </>
+    )
+  }
   const r = data?.request
-  const canReview = r && ['pending', 'in_review'].includes(r.status)
-
   return (
     <>
-      <PageHeader title="Supply requests" subtitle="Review the request, then approve, reject, or release it." />
-      <Workspace back={ROUTES.ADMIN.INVENTORY_REQUESTS} backLabel="All requests" flush>
-        {data === null && <p className="notice inset-text">Loading request…</p>}
-        {data === undefined && loadError && (
-          <ErrorState
-            what="this request"
-            message={loadError}
-            onRetry={() => {
-              setData(null)
-              load()
-            }}
+      <PageHeader title={r ? r.request_code : 'Inventory request'} subtitle={r ? `${r.center_name} · ${REQUEST_STATUS_LABEL[r.status]}` : 'Loading…'} />
+      {notice && (
+        <p className="notice-bar" role="status">
+          <Icon name="check" size={16} />
+          {notice}
+          <button type="button" className="icon-btn" aria-label="Dismiss" onClick={() => setNotice('')}>
+            <Icon name="x" size={14} />
+          </button>
+        </p>
+      )}
+      <Workspace back={ROUTES.ADMIN.INVENTORY_REQUESTS} backLabel="Request approvals" flush>
+        {!data ? (
+          <div className="workspace-pad muted">Loading the request…</div>
+        ) : (
+          <RequestOverview
+            data={data}
+            showStock={['pending', 'approved', 'processing'].includes(r.status)}
+            actions={r.status === 'pending' ? <ReviewPanel data={data} onDone={done} /> : r.status === 'discrepancy' ? <ResolvePanel request={r} onDone={done} /> : null}
           />
-        )}
-        {data === false && <EmptyState icon="request" title="Request not found" text="It may have been removed, or the link is incomplete." />}
-
-        {r && (
-          <>
-            <div className="detail-head">
-              <div>
-                <h2>
-                  {r.request_code} <StatusBadge status={r.status} />
-                </h2>
-                <p>
-                  {r.center_name} · sent by {r.requested_by_name || 'a center admin'} on {shortDate(r.created_at)}
-                </p>
-              </div>
-            </div>
-
-            <div className="detail-layout">
-              <div className="stack">
-                <section>
-                  <div className="section-title">
-                    <h3>Purpose</h3>
-                  </div>
-                  <p className="lede-text">{r.purpose}</p>
-                </section>
-                <div className="allowance-students">
-                  <DataTable columns={ITEM_COLUMNS} rows={data.items} />
-                </div>
-                {r.admin_remarks && (
-                  <section>
-                    <div className="section-title">
-                      <h3>Main office note</h3>
-                      <span>{r.reviewed_by_name}</span>
-                    </div>
-                    <p className="lede-text">{r.admin_remarks}</p>
-                  </section>
-                )}
-              </div>
-
-              <aside className="side-panel">
-                <h3>{canReview ? 'Decision' : r.status === 'approved' ? 'Release' : 'Status'}</h3>
-                <p className="notice">
-                  <Icon name="truck" size={16} />
-                  {r.delivery_name ? `Pickup: ${r.delivery_name}${r.delivery_vehicle ? ` · ${r.delivery_vehicle}` : ''}${r.delivery_plate ? ` · ${r.delivery_plate}` : ''}` : 'No delivery personnel named'}
-                </p>
-
-                {canReview && (
-                  <>
-                    <TextArea id="remarks" label="Note to the learning center" rows={3} placeholder="e.g. Approved in full. Ready for pickup on Friday." value={remarks} onChange={(e) => setRemarks(e.target.value)} />
-                    <div className="form-actions">
-                      {r.status === 'pending' && (
-                        <Button variant="ghost" disabled={busy} onClick={() => act(() => inventoryService.review(id, 'in_review', remarks), 'Marked in review.')}>
-                          Mark in review
-                        </Button>
-                      )}
-                      <Button variant="danger" disabled={busy} onClick={() => act(() => inventoryService.review(id, 'rejected', remarks), 'Request rejected.')}>
-                        Reject
-                      </Button>
-                      <Button disabled={busy} onClick={() => act(() => inventoryService.review(id, 'approved', remarks), 'Request approved.')}>
-                        <Icon name="check" size={17} />
-                        Approve
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                {r.status === 'approved' && (
-                  <>
-                    <p className="notice">Releasing takes the items out of stock and records the release on the ledger.</p>
-                    <Button disabled={busy} onClick={() => act(() => inventoryService.release(id), 'Items released and recorded.')}>
-                      <Icon name="inventory" size={17} />
-                      Release items
-                    </Button>
-                  </>
-                )}
-
-                {['released', 'received', 'rejected', 'cancelled'].includes(r.status) && (
-                  <p className="notice">
-                    {r.status === 'released' && `Released ${shortDate(r.released_at)}. Waiting for the center to confirm receipt.`}
-                    {r.status === 'received' && `Received by the center on ${shortDate(r.received_at)}.`}
-                    {r.status === 'rejected' && `Rejected on ${shortDate(r.reviewed_at)}.`}
-                    {r.status === 'cancelled' && 'Cancelled by the center.'}
-                  </p>
-                )}
-
-                {message && (
-                  <p className={message.ok ? 'notice' : 'notice is-error'} role="status">
-                    {message.text}
-                  </p>
-                )}
-              </aside>
-            </div>
-          </>
         )}
       </Workspace>
     </>
+  )
+}
+
+function ReviewPanel({ data, onDone }) {
+  const [remarks, setRemarks] = useState('')
+  const [dialog, setDialog] = useState(null) // 'approved' | 'rejected'
+  const short = data.items.filter((i) => !i.enough)
+  return (
+    <section className="side-box action-box">
+      <h3>Review</h3>
+      {short.length > 0 ? (
+        <p className="inline-alert standalone">
+          <Icon name="alert" size={16} />
+          {short.map((i) => i.product_name).join(', ')} {short.length === 1 ? 'is' : 'are'} short in stock right now. You can still approve; inventory personnel cannot prepare it until stock is enough.
+        </p>
+      ) : (
+        <p className="field-hint">All items are available in the main office inventory. Approving does not deduct stock.</p>
+      )}
+      <TextArea id="review-remarks" label="Remarks" rows={4} maxLength={1000} placeholder="Required when disapproving" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+      <div className="action-row">
+        <Button variant="danger" onClick={() => setDialog('rejected')}>
+          Disapprove
+        </Button>
+        <Button onClick={() => setDialog('approved')}>
+          <Icon name="check" size={16} />
+          Approve
+        </Button>
+      </div>
+      {dialog && (
+        <ConfirmDialog
+          open
+          title={dialog === 'approved' ? `Approve ${data.request.request_code}?` : `Disapprove ${data.request.request_code}?`}
+          message={
+            dialog === 'approved'
+              ? 'The learning center is notified and the request moves to Inventory Request Processing. Stock is not deducted yet.'
+              : 'The learning center is notified with your reason. The request and its documents are kept on record.'
+          }
+          confirmLabel={dialog === 'approved' ? 'Approve' : 'Disapprove'}
+          variant={dialog === 'approved' ? 'primary' : 'danger'}
+          reason={{ label: dialog === 'approved' ? 'Approval remarks (optional)' : 'Reason for disapproval', required: dialog === 'rejected' }}
+          onClose={() => setDialog(null)}
+          onConfirm={async ({ reason }) => {
+            const d = await requestService.review(data.request.id, dialog, reason || remarks.trim())
+            setDialog(null)
+            onDone(d)
+          }}
+        />
+      )}
+    </section>
+  )
+}
+
+function ResolvePanel({ request, onDone }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className="side-box action-box">
+      <h3>Discrepancy</h3>
+      <p className="field-hint">The learning center received different quantities. Look into it, then record the outcome to close the request.</p>
+      <Button className="btn-block" onClick={() => setOpen(true)}>
+        Resolve discrepancy
+      </Button>
+      {open && (
+        <ConfirmDialog
+          open
+          title={`Resolve the discrepancy on ${request.request_code}`}
+          message="The request is completed and the learning center is notified with your notes."
+          confirmLabel="Resolve"
+          reason={{ label: 'How was it resolved?', required: true, placeholder: 'e.g. 2 missing pairs found at the warehouse and sent with REQ-0012' }}
+          onClose={() => setOpen(false)}
+          onConfirm={async ({ reason }) => {
+            const d = await requestService.resolve(request.id, reason)
+            setOpen(false)
+            onDone(d)
+          }}
+        />
+      )}
+    </section>
   )
 }
