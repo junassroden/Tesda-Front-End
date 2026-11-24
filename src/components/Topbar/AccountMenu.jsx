@@ -4,7 +4,14 @@ import { ROUTES } from '../../constants/routes.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import Icon from '../Icon/Icon.jsx'
 
-const ROLE_LABEL = { admin: 'Main office administrator', center_admin: 'Learning center administrator', instructor: 'Teacher', student: 'Student' }
+const ROLE_LABEL = {
+  admin: 'Main office administrator',
+  center_admin: 'Learning center administrator',
+  instructor: 'Teacher',
+  student: 'Student',
+  inventory_staff: 'Inventory personnel',
+  delivery_staff: 'Delivery personnel',
+}
 
 const initials = (name = '') =>
   name
