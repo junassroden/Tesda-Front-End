@@ -39,11 +39,17 @@ const PATHS = {
   chevronDown: ['M6 9l6 6 6-6'],
   expand: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'],
   collapse: ['M9 4v5H4', 'M15 4v5h5', 'M9 20v-5H4', 'M15 20v-5h5'],
+  mail: ['M3.5 6h17v12h-17z', 'M3.5 6.5 12 13l8.5-6.5'],
+  phone: ['M5 4h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.3 6.3l1.4-2.2L20 15.5V19a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z'],
+  mapPin: ['M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z', 'M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'],
+  globe: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M3 12h18', 'M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z'],
+  facebook: ['M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z'],
+  quote: ['M5 18c2.5-1 4-3.2 4-6.5V7H4.5v5H8', 'M15 18c2.5-1 4-3.2 4-6.5V7h-4.5v5H18'],
   sparkle: ['M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z', 'M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z'],
 }
 
 /** <Icon name="documents" size={20} /> . Decorative by default; pass label to announce it. */
-export default function Icon({ name, size = 20, label, className = '' }) {
+export default function Icon({ name, size = 20, label, className = '', strokeWidth }) {
   const paths = PATHS[name]
   if (!paths) return null
   return (
@@ -54,7 +60,7 @@ export default function Icon({ name, size = 20, label, className = '' }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={name === 'more' ? 3 : 1.75}
+      strokeWidth={strokeWidth ?? (name === 'more' ? 3 : 1.75)}
       strokeLinecap="round"
       strokeLinejoin="round"
       role={label ? 'img' : undefined}
