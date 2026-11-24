@@ -1,51 +1,97 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import regionalOffice from '../../assets/images/bg.png'
 import innovationCenter from '../../assets/images/innovation-center.jpg'
+import provincialOffice from '../../assets/images/provincial-office.jpg'
 import Icon from '../../components/Icon/Icon.jsx'
 import { ROUTES } from '../../constants/routes.js'
+import { CONTACT } from '../../constants/site.js'
 import { useReveal } from '../../hooks/useReveal.js'
 
 const SERVICES = [
-  { icon: 'documents', title: 'Document archive', text: 'Upload scans once. OCR reads each page, so you can search for the words inside a file, not just its name.' },
-  { icon: 'request', title: 'Supply requests', text: 'Learning centers request items from main office stock, then confirm delivery when they arrive.' },
-  { icon: 'allowance', title: 'Training allowances', text: 'Request an allowance for a batch and check off each trainee before the funds are released.' },
-  { icon: 'programs', title: 'Programs and batches', text: 'Register programs, open batches, and keep each class list current for the whole term.' },
+  { icon: 'documents', title: 'Document archive', text: 'Scanned uploads, OCR text search, sorting by document type, official letters and memoranda' },
+  { icon: 'request', title: 'Supply requests', text: 'Item requests from learning centers, stock checks, approval, delivery and receipt' },
+  { icon: 'allowance', title: 'Training allowances', text: 'Allowance requests per batch, trainee checklists, review and release of funds' },
+  { icon: 'programs', title: 'Programs and batches', text: 'Course registration, batch scheduling, class lists, and teacher assignments' },
+  { icon: 'users', title: 'Trainee records', text: 'Enrollment, requirements, attendance, and completion status for every trainee' },
+  { icon: 'shield', title: 'Release ledger', text: 'Hash-linked approvals and releases, a complete audit trail, and tamper-evident records' },
 ]
 
-const STEPS = [
-  { title: 'Submitted', status: 'Pending', tone: 'warning', icon: 'upload', text: 'A learning center sends a supply or allowance request, with the items or the batch it covers.' },
-  { title: 'Reviewed', status: 'In review', tone: 'info', icon: 'search', text: 'The main office checks stock, budget, and trainee details before it decides.' },
-  { title: 'Approved', status: 'Approved', tone: 'success', icon: 'check', text: 'The decision goes back to the center with any notes from the reviewer.' },
-  { title: 'Released', status: 'Released', tone: 'success', icon: 'truck', text: 'Items or funds go out, the center confirms receipt, and the release is recorded.' },
+// Sample announcements: replace with the regional office's real updates.
+const ARTICLES = [
+  {
+    image: regionalOffice,
+    alt: 'The TESDA MIMAROPA regional office building',
+    date: 'November 18, 2026',
+    title: 'Learning Centers Can Now Follow Supply Requests Through to Delivery',
+    text: 'Each request now shows its status at every step, from submission to the center confirming receipt, so neither side has to call to ask.',
+  },
+  {
+    image: innovationCenter,
+    alt: 'The TESDA Innovation Center building',
+    date: 'October 30, 2026',
+    title: 'Scanned Documents Are Now Searchable by What They Say',
+    text: 'Uploads are read with OCR when they arrive. A search now finds the words inside a scan, not just the file name.',
+  },
 ]
 
-const PROVINCES = ['Occidental Mindoro', 'Oriental Mindoro', 'Marinduque', 'Romblon', 'Palawan']
+const RECENT = [
+  { image: provincialOffice, date: 'October 12, 2026', title: 'Allowance Checklists Added for Every Training Batch' },
+  { image: regionalOffice, date: 'September 25, 2026', title: 'Printed Records Now Carry a QR Code Anyone Can Verify' },
+  { image: innovationCenter, date: 'September 3, 2026', title: 'Teachers Can Build Class Lists in Their Own Portal' },
+]
 
-/** "Explore more →" style text link. */
-function MoreLink({ href, to, children, light = false }) {
-  const className = light ? 'site-more is-light' : 'site-more'
-  const body = (
-    <>
-      {children}
-      <Icon name="arrowRight" size={17} />
-    </>
-  )
-  return to ? (
-    <Link to={to} className={className}>
-      {body}
-    </Link>
-  ) : (
-    <a href={href} className={className}>
-      {body}
-    </a>
-  )
+const OTHER_SERVICES = [
+  { image: provincialOffice, title: 'Record Verification', sub: 'Printed Sheets', to: ROUTES.VERIFY_HOME },
+  { image: innovationCenter, title: 'Assessment', sub: 'National Certificates', href: CONTACT.website },
+  { image: regionalOffice, title: 'Scholarships', sub: 'TWSP, PESFA, STEP', href: CONTACT.website },
+]
+
+const slug = (text) => text.toLowerCase().replaceAll(' ', '-')
+
+function Eyebrow({ children, className = '' }) {
+  return <p className={`h-eyebrow ${className}`.trim()}>{children}</p>
 }
 
-function Meta({ kind, detail, light = false }) {
+/** "Get in touch" form. There is no mail backend, so sending opens the visitor's email app with the message filled in. */
+function ContactForm() {
+  const [form, setForm] = useState({ first: '', last: '', email: '', subject: '', message: '' })
+  const update = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }))
+
+  const onSubmit = (event) => {
+    event.preventDefault()
+    const body = `${form.message}\n\n${form.first} ${form.last}\n${form.email}`
+    window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(body)}`
+  }
+
   return (
-    <p className={light ? 'site-meta is-light' : 'site-meta'}>
-      <span>{kind}</span>
-      <span>{detail}</span>
-    </p>
+    <form className="h-form" onSubmit={onSubmit}>
+      <label>
+        <span>First Name</span>
+        <input required autoComplete="given-name" value={form.first} onChange={update('first')} />
+      </label>
+      <label>
+        <span>Last Name</span>
+        <input required autoComplete="family-name" value={form.last} onChange={update('last')} />
+      </label>
+      <label>
+        <span>E-mail Address</span>
+        <input required type="email" autoComplete="email" placeholder="Your e-mail address" value={form.email} onChange={update('email')} />
+      </label>
+      <label>
+        <span>Subject</span>
+        <input required placeholder="What is your inquiry about?" value={form.subject} onChange={update('subject')} />
+      </label>
+      <label className="is-wide">
+        <span>Question / Message</span>
+        <textarea required rows={6} placeholder="Tell us briefly what you need so we can give you a proper answer." value={form.message} onChange={update('message')} />
+      </label>
+      <div className="is-wide">
+        <button type="submit" className="site-btn h-btn-dark">
+          Send Message
+        </button>
+      </div>
+    </form>
   )
 }
 
@@ -55,60 +101,52 @@ export default function LandingPage() {
   return (
     <main id="main">
       {/* Hero */}
-      <section className="s-hero">
-        <div className="site-wrap s-hero-grid">
-          <div className="s-hero-copy rise">
-            <p className="s-kicker">TESDA Region IV-B · MIMAROPA</p>
-            <h1>Requests, records, and trainee services in one place.</h1>
-            <p className="s-lede">TESDA NEXUS connects the regional office with its learning centers: supply and allowance requests, official documents, programs, and trainees on one shared record.</p>
-            <div className="s-hero-actions">
-              <Link to={ROUTES.LOGIN} className="site-btn site-btn-primary site-btn-lg">
-                Log in to your portal
-              </Link>
-              <MoreLink href="#how-it-works">See how it works</MoreLink>
-            </div>
-          </div>
-
-          <div className="s-hero-cards rise">
-            <a href="#portals" className="s-card s-card-featured">
-              <img src={innovationCenter} alt="The TESDA Innovation Center building" />
-              <Meta kind="Main office" detail="Region IV-B" />
-              <h2>Review every supply and allowance request from one queue</h2>
-              <span className="site-more">
-                Explore portals
-                <Icon name="arrowRight" size={17} />
-              </span>
-            </a>
-            <a href="#services" className="s-card">
-              <Meta kind="Learning centers" detail="Requests" />
-              <h2>Send a request and follow it all the way to release</h2>
-            </a>
-            <a href="#records" className="s-card">
-              <Meta kind="Records" detail="Archive" />
-              <h2>Search scanned documents by the words inside them</h2>
-            </a>
-          </div>
+      <section className="h-hero" aria-labelledby="hero-title">
+        <img className="h-hero-bg" src={regionalOffice} alt="" />
+        <div className="site-wrap h-hero-inner rise">
+          <Eyebrow>TESDA Region IV-B · MIMAROPA</Eyebrow>
+          <h1 id="hero-title">
+            Skilled People,
+            <br />
+            Trusted Records
+          </h1>
+          <p>
+            The shared system of the TESDA MIMAROPA regional office and its learning centers, for supply and allowance requests, official documents, programs, and trainee
+            records.
+          </p>
+          <Link to={ROUTES.LOGIN} className="site-btn h-btn-gold">
+            Log in to your portal
+          </Link>
         </div>
       </section>
 
-      {/* About + services */}
-      <section id="about" className="s-about" aria-labelledby="about-title">
-        <div className="site-wrap">
-          <div className="s-about-head" data-reveal>
-            <h2 id="about-title" className="s-title">
-              One shared record for TESDA MIMAROPA and its learning centers
-            </h2>
-            <p className="s-body">
-              TESDA NEXUS replaces paper forms and long email threads between the regional office and the learning centers across Mindoro, Marinduque, Romblon, and Palawan. Every request,
-              document, and release lives in one place that both sides can see.
-            </p>
-            <MoreLink href="#how-it-works">See how it works</MoreLink>
-          </div>
+      {/* About */}
+      <section id="about" className="h-about" aria-labelledby="about-title">
+        <div className="site-wrap" data-reveal>
+          <h2 id="about-title" className="h-eyebrow">
+            TESDA NEXUS · Region IV-B
+          </h2>
+          <p>TESDA NEXUS is the shared record of the TESDA MIMAROPA regional office and the learning centers it serves across Mindoro, Marinduque, Romblon, and Palawan.</p>
+          <p>We help learning centers request supplies and training allowances, and follow each request from submission through review, approval, and release.</p>
+          <p>We keep the region’s official documents in one archive. Every upload is read with OCR, so a document can be found by the words inside it, not just its name.</p>
+          <p>
+            For programs and trainees, teachers and center administrators register courses, open batches, build class lists, and keep each trainee’s requirements in order. Every
+            approval and release is written to a hash-linked ledger, so the record stays complete and any change to it can be seen.
+          </p>
+          <p>Our portals are open to TESDA personnel, partner learning centers, and teachers. Printed records can be verified by anyone, no account needed.</p>
+        </div>
+      </section>
 
-          <div id="services" className="s-services">
+      {/* Services */}
+      <section id="services" className="h-practice" aria-labelledby="services-title">
+        <div className="site-wrap">
+          <h2 id="services-title" className="h-eyebrow is-center" data-reveal>
+            Our Services
+          </h2>
+          <div className="h-practice-grid">
             {SERVICES.map((s, i) => (
-              <article key={s.title} className="s-service" data-reveal data-delay={i * 60}>
-                <Icon name={s.icon} size={34} />
+              <article key={s.title} id={`service-${slug(s.title)}`} className={i === 2 ? 'h-practice-card is-featured' : 'h-practice-card'} data-reveal data-delay={(i % 3) * 60}>
+                <Icon name={s.icon} size={50} strokeWidth={1} />
                 <h3>{s.title}</h3>
                 <p>{s.text}</p>
               </article>
@@ -117,204 +155,103 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="s-dark" aria-labelledby="flow-title">
-        <div className="site-wrap">
-          <div className="s-head-row" data-reveal>
-            <div>
-              <h2 id="flow-title" className="s-title">
-                How a request moves
-              </h2>
-              <p className="s-body">The learning center and the main office see the same status at every step.</p>
+      {/* Updates + other services share one dark band, as on the reference layout */}
+      <div className="h-band">
+        <section id="news" className="h-news" aria-labelledby="news-title">
+          <div className="site-wrap">
+            <div className="h-heading" data-reveal>
+              <Eyebrow className="is-center">News &amp; Updates</Eyebrow>
+              <h2 id="news-title">Announcements</h2>
             </div>
-            <MoreLink to={ROUTES.LOGIN} light>
-              Log in to start
-            </MoreLink>
-          </div>
-
-          <ol className="s-steps">
-            {STEPS.map((s, i) => (
-              <li key={s.title} className="s-step" data-reveal data-delay={i * 60}>
-                <div className="s-step-num" aria-hidden="true">
-                  <span>{String(i + 1).padStart(2, '0')}</span>
-                  <Icon name={s.icon} size={22} />
-                </div>
-                <div className="s-step-body">
-                  <h3>{s.title}</h3>
-                  <p className="s-step-meta">
-                    Step {i + 1}
-                    <span className={`s-chip tone-${s.tone}`}>{s.status}</span>
-                  </p>
-                  <p>{s.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Portals */}
-      <section id="portals" className="s-plain" aria-labelledby="portals-title">
-        <div className="site-wrap">
-          <div className="s-head-split" data-reveal>
-            <h2 id="portals-title" className="s-title">
-              Each role gets the tools it needs, and nothing it doesn’t
-            </h2>
-            <div>
-              <p className="s-body">Your account opens the portal for your role. Main office staff, learning center administrators, and teachers each see their own work.</p>
-              <MoreLink to={ROUTES.LOGIN}>Log in to your portal</MoreLink>
+            <div className="h-news-action">
+              <a href={CONTACT.website} target="_blank" rel="noreferrer" className="site-btn h-btn-gold is-small">
+                View All &gt;
+              </a>
             </div>
-          </div>
 
-          <div className="s-portals">
-            <article className="s-portal" data-reveal>
-              <div className="s-portal-visual">
-                <div className="snippet">
-                  <div className="snippet-row">
-                    <span>REQ-0001 · Welding gloves × 4</span>
-                    <em className="dot warning">Pending</em>
+            <div className="h-news-grid">
+              {ARTICLES.map((a, i) => (
+                <article key={a.title} className="h-article" data-reveal data-delay={i * 80}>
+                  <img src={a.image} alt={a.alt} />
+                  <div className="h-article-body">
+                    <h3>{a.title}</h3>
+                    <p className="h-date">
+                      <Icon name="calendar" size={14} />
+                      {a.date}
+                    </p>
+                    <p>{a.text}</p>
+                    <a href={CONTACT.website} target="_blank" rel="noreferrer" className="site-btn h-btn-dark is-small">
+                      Read More
+                    </a>
                   </div>
-                  <div className="snippet-row">
-                    <span>REQ-0003 · Multimeter × 5</span>
-                    <em className="dot info">In review</em>
-                  </div>
-                  <div className="snippet-actions">
-                    <span className="mini-btn ghost">Reject</span>
-                    <span className="mini-btn">Approve</span>
-                  </div>
-                </div>
-              </div>
-              <span className="s-chip tone-success">
-                <Icon name="check" size={13} /> Available
-              </span>
-              <h3>Main office administrators</h3>
-              <p>Review requests from every learning center, keep the regional archive, and track what was released.</p>
-            </article>
+                </article>
+              ))}
 
-            <article className="s-portal" data-reveal data-delay="60">
-              <div className="s-portal-visual">
-                <div className="snippet">
-                  <div className="snippet-field">
-                    <small>Item</small>
-                    <span>Safety goggles</span>
-                  </div>
-                  <div className="snippet-field">
-                    <small>Quantity</small>
-                    <span className="num">6</span>
-                  </div>
-                  <div className="snippet-actions">
-                    <span className="mini-btn">Send request</span>
-                  </div>
-                </div>
-              </div>
-              <span className="s-chip tone-success">
-                <Icon name="check" size={13} /> Available
-              </span>
-              <h3>Learning center administrators</h3>
-              <p>Request supplies and allowances, follow each request, and keep trainees’ requirements in order.</p>
-            </article>
-
-            <article className="s-portal" data-reveal data-delay="120">
-              <div className="s-portal-visual">
-                <div className="snippet">
-                  <p className="snippet-title">CSS Batch 2026-01</p>
-                  {['Juan Dela Cruz', 'Liza Garcia', 'Mark Villanueva'].map((n) => (
-                    <div key={n} className="snippet-person">
-                      <span className="avatar">
-                        {n
-                          .split(' ')
-                          .map((w) => w[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </span>
-                      {n}
-                    </div>
+              <aside className="h-recent" aria-labelledby="recent-title" data-reveal data-delay="160">
+                <h3 id="recent-title">Recent Updates</h3>
+                <ul>
+                  {RECENT.map((r) => (
+                    <li key={r.title}>
+                      <img src={r.image} alt="" />
+                      <div>
+                        <h4>{r.title}</h4>
+                        <p className="h-date">
+                          <Icon name="calendar" size={14} />
+                          {r.date}
+                        </p>
+                      </div>
+                    </li>
                   ))}
-                </div>
-              </div>
-              <span className="s-chip tone-success">
-                <Icon name="check" size={13} /> Available
-              </span>
-              <h3>Teachers</h3>
-              <p>Build class lists, open a batch for each program, and assign trainees to it.</p>
-            </article>
+                </ul>
+              </aside>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Records */}
-      <section id="records" className="s-warm" aria-labelledby="records-title">
+        <section className="h-others" aria-labelledby="other-title">
+          <div className="site-wrap">
+            <div className="h-heading is-light" data-reveal>
+              <Eyebrow className="is-center">Other Services</Eyebrow>
+              <h2 id="other-title">Beyond the Portal</h2>
+            </div>
+
+            <div className="h-others-grid">
+              {OTHER_SERVICES.map((s, i) => {
+                const button = s.to ? (
+                  <Link to={s.to} className="site-btn h-btn-dark is-small">
+                    Learn More
+                  </Link>
+                ) : (
+                  <a href={s.href} target="_blank" rel="noreferrer" className="site-btn h-btn-dark is-small">
+                    Learn More
+                  </a>
+                )
+                return (
+                  <article key={s.title} className="h-other" data-reveal data-delay={i * 80}>
+                    <img src={s.image} alt="" />
+                    <div className="h-other-card">
+                      <h3>{s.title}</h3>
+                      <p>{s.sub}</p>
+                      {button}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Contact */}
+      <section id="contact" className="h-contact" aria-labelledby="contact-title">
         <div className="site-wrap">
-          <div className="s-head-row" data-reveal>
-            <h2 id="records-title" className="s-title">
-              Find any file by what it says, and trust every record
-            </h2>
-            <MoreLink to={ROUTES.LOGIN}>Open the archive</MoreLink>
+          <div className="h-contact-card" data-reveal>
+            <div className="h-heading">
+              <Eyebrow className="is-center">Contact Us</Eyebrow>
+              <h2 id="contact-title">Get in Touch</h2>
+            </div>
+            <ContactForm />
           </div>
-
-          <div className="s-records">
-            <article className="s-record" data-reveal>
-              <div className="s-record-text">
-                <Icon name="search" size={28} />
-                <h3>Search inside scanned documents</h3>
-                <p>Uploads are read with OCR and sorted by type, so a search finds the words inside a scan.</p>
-              </div>
-              <div className="snippet">
-                <div className="snippet-search">
-                  <Icon name="search" size={14} />
-                  vendor contract
-                </div>
-                <div className="snippet-doc">
-                  <Icon name="documents" size={15} />
-                  <div>
-                    <span>Supplier_agreement_2026.pdf</span>
-                    <small>
-                      “…the <mark>vendor contract</mark> is renewed for twelve months…”
-                    </small>
-                  </div>
-                  <em className="tag">Letter</em>
-                </div>
-              </div>
-            </article>
-
-            <article className="s-record" data-reveal data-delay="60">
-              <div className="s-record-text">
-                <Icon name="shield" size={28} />
-                <h3>Tamper-evident releases</h3>
-                <p>Each approval and release is hash-linked to the one before it, so a changed record stands out.</p>
-              </div>
-              <div className="snippet">
-                {[
-                  ['#2', 'ALW-0002 released', '9c1e…4a7f'],
-                  ['#1', 'REQ-0002 released', '3b8d…e210'],
-                  ['#0', 'Ledger started', '0000…0000'],
-                ].map(([n, label, hash]) => (
-                  <div key={n} className="snippet-ledger">
-                    <span className="num">{n}</span>
-                    <span>{label}</span>
-                    <code>{hash}</code>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      {/* Region */}
-      <section className="s-plain s-region" aria-labelledby="region-title">
-        <div className="site-wrap">
-          <h2 id="region-title" className="s-title" data-reveal>
-            Serving learning centers across MIMAROPA
-          </h2>
-          <p className="s-body" data-reveal>
-            Provincial offices and partner centers in all five provinces of Region IV-B.
-          </p>
-          <ul className="s-provinces" data-reveal>
-            {PROVINCES.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
         </div>
       </section>
     </main>
