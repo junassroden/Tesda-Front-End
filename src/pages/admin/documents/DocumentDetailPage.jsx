@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../../components/Button/Button.jsx'
 import DocumentViewer from '../../../components/DocumentViewer/DocumentViewer.jsx'
+import LedgerBadge from '../../../components/ledger/LedgerBadge.jsx'
 import EmptyState, { ErrorState } from '../../../components/EmptyState/EmptyState.jsx'
 import Icon from '../../../components/Icon/Icon.jsx'
 import Modal from '../../../components/Modal/Modal.jsx'
@@ -87,7 +88,13 @@ export default function DocumentDetailPage() {
   return (
     <>
       <PageHeader title="Documents" subtitle="Official records of the main office." />
-      <Workspace back={ROUTES.ADMIN.DOCUMENTS} backLabel="All documents" actions={document ? actions : null} flush>
+      <Workspace
+        back={ROUTES.ADMIN.DOCUMENTS}
+        backLabel="All documents"
+        description={document ? <LedgerBadge ledger={document.ledger} entity={{ type: 'document', id: document.id }} showNone /> : null}
+        actions={document ? actions : null}
+        flush
+      >
         {document === null && (
           <div className="detail-head" aria-hidden="true">
             <div className="skeleton-stack" style={{ width: '50%' }}>
