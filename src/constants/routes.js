@@ -10,8 +10,10 @@ export const ROUTES = {
     INVENTORY: '/admin/inventory',
     REGISTER_ITEM: '/admin/inventory/register',
     INVENTORY_ITEM: '/admin/inventory/items/:id',
-    INVENTORY_REQUESTS: '/admin/inventory/requests',
+    INVENTORY_REQUESTS: '/admin/inventory/requests', // Inventory request approvals
     INVENTORY_REQUEST_DETAIL: '/admin/inventory/requests/:id',
+    STAFF: '/admin/staff',
+    LEDGER: '/admin/ledger',
     ALLOWANCE: '/admin/allowance',
     ALLOWANCE_CHECKLIST: '/admin/allowance/:id',
     TRAINING: '/admin/training',
@@ -31,7 +33,11 @@ export const ROUTES = {
     STUDENT_RECORDS: '/center/students',
     STUDENT_RECORD: '/center/students/:studentId',
     AVAILABLE_INVENTORY: '/center/request-inventory',
-    REQUEST_ITEM: '/center/request-inventory/:itemId',
+    REQUEST_ITEM: '/center/request-inventory/:itemId', // older links; opens a new request with the item
+    INVENTORY_REQUESTS: '/center/inventory-requests',
+    NEW_INVENTORY_REQUEST: '/center/inventory-requests/new',
+    INVENTORY_REQUEST: '/center/inventory-requests/:id',
+    EDIT_INVENTORY_REQUEST: '/center/inventory-requests/:id/edit',
     REQUEST_ALLOWANCE: '/center/request-allowance',
     DELIVERY_PERSONNEL: '/center/delivery-personnel',
   },
@@ -53,6 +59,24 @@ export const ROUTES = {
     PROFILE: '/student/profile',
   },
 
+  // Main office inventory personnel: Inventory Request Processing.
+  INVENTORY: {
+    DASHBOARD: '/inventory',
+    REQUEST: '/inventory/requests/:id',
+  },
+
+  // Main office delivery personnel: Delivery Management.
+  DELIVERY: {
+    DASHBOARD: '/delivery',
+    SCAN: '/delivery/scan',
+    DETAIL: '/delivery/deliveries/:id',
+    HISTORY: '/delivery/history',
+  },
+
+  // Public verification of printed sheets (no login): the QR code opens VERIFY.
+  VERIFY_HOME: '/verify',
+  VERIFY: '/verify/:token',
+
   // Print-ready sheets (no sidebar). kind: info | checklist | packet
   PRINT: {
     STUDENT: '/print/students/:studentId/:kind',
@@ -71,6 +95,8 @@ export const ROLES = {
   LEARNING_CENTER: 'center_admin',
   TEACHER: 'instructor',
   STUDENT: 'student',
+  INVENTORY: 'inventory_staff',
+  DELIVERY: 'delivery_staff',
 }
 
 /** Where each role lands after logging in. */
@@ -79,4 +105,6 @@ export const HOME_BY_ROLE = {
   [ROLES.LEARNING_CENTER]: ROUTES.CENTER.DASHBOARD,
   [ROLES.TEACHER]: ROUTES.TEACHER.DASHBOARD,
   [ROLES.STUDENT]: ROUTES.STUDENT.DASHBOARD,
+  [ROLES.INVENTORY]: ROUTES.INVENTORY.DASHBOARD,
+  [ROLES.DELIVERY]: ROUTES.DELIVERY.DASHBOARD,
 }
