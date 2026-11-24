@@ -43,6 +43,7 @@ export default function LoginPage() {
           </Link>
 
           <form className="signin-form" onSubmit={handleSubmit}>
+            <p className="signin-eyebrow">TESDA Region IV-B · MIMAROPA</p>
             <h1 id="signin-title">Log in to your portal</h1>
             <p className="signin-lede">Use the account your TESDA office or learning center gave you.</p>
 
