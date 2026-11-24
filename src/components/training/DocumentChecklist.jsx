@@ -4,6 +4,7 @@ import StatusBadge from '../DataTable/StatusBadge.jsx'
 import Icon from '../Icon/Icon.jsx'
 import Modal from '../Modal/Modal.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import LedgerBadge from '../ledger/LedgerBadge.jsx'
 import FilePicker from './FilePicker.jsx'
 import { documentFiles } from '../../services/trainingService.js'
 import { shortDate } from '../../utils/format.js'
@@ -75,6 +76,7 @@ export default function DocumentChecklist({ documents, mode = 'student', readOnl
                 <div className="doc-title">
                   <strong>{doc.name}</strong>
                   {doc.applies ? <StatusBadge status={doc.status} /> : <span className="tag">Not required</span>}
+                  <LedgerBadge ledger={doc.ledger} />
                 </div>
                 <p className="doc-desc">
                   {doc.applies ? doc.description : 'Only needed when the civil status is married.'}
