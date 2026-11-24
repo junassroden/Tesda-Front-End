@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ErrorState } from '../../components/EmptyState/EmptyState.jsx'
 import PdfPages from '../../components/training/PdfPages.jsx'
+import SealQr from '../../components/ledger/SealQr.jsx'
 import { PrintHeader, PrintToolbar } from '../../components/training/PrintParts.jsx'
 import { documentFiles, studentRecordService } from '../../services/trainingService.js'
 import { dateRange, shortDate } from '../../utils/format.js'
 import { DOC_STATUS_LABEL, civilLabel } from '../../utils/training.js'
 
 const TITLES = { info: 'Student information sheet', checklist: 'Student document checklist', packet: 'Student enrollment packet' }
+const SEAL_KINDS = { info: 'student_info', checklist: 'student_checklist', packet: 'enrollment_packet' }
 
 /** Print-ready student sheets: information sheet, document checklist, or the full enrollment packet. */
 export default function PrintStudentPage() {
@@ -35,7 +37,9 @@ export default function PrintStudentPage() {
   return (
     <div className="print-doc">
       <PrintToolbar title={title} waitFor={kind === 'packet' ? verified.reduce((n, d) => n + d.files.filter((f) => f.mime_type === 'application/pdf').length, 0) : 0} />
-      <PrintHeader center={s.training_center_name} address={s.center_address} title={title} />
+      <PrintHeader center={s.training_center_name} address={s.center_address} title={title}>
+        <SealQr kind={SEAL_KINDS[kind] ?? 'student_info'} entityId={s.id} />
+      </PrintHeader>
 
       {(kind === 'info' || kind === 'packet') && <InfoSheet s={s} enrollments={data.enrollments} />}
       {(kind === 'checklist' || kind === 'packet') && <Checklist s={s} documents={data.documents} summary={data.summary} breakBefore={kind === 'packet'} />}
