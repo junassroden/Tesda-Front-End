@@ -11,11 +11,10 @@ import { LEARNING_CENTER_SUBTITLE } from '../../constants/navItems.js'
 import { ROUTES, toPath } from '../../constants/routes.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { toList } from '../../services/api.js'
-import { inventoryService } from '../../services/inventoryService.js'
 import { programService } from '../../services/programService.js'
 import { summaryService } from '../../services/summaryService.js'
 import { countOf, peso, shortDate } from '../../utils/format.js'
-import { ALLOWANCE, SUPPLY } from '../../utils/requestStatus.js'
+import { ALLOWANCE, REQUEST_STATUS_LABEL, SUPPLY } from '../../utils/requestStatus.js'
 import { batchBadge } from '../../utils/training.js'
 
 const BATCH_COLUMNS = [
@@ -32,8 +31,6 @@ export default function LCDashboard() {
   const [programsError, setProgramsError] = useState('')
   const [summary, setSummary] = useState(null) // object | undefined (failed)
   const [summaryError, setSummaryError] = useState('')
-  const [confirming, setConfirming] = useState(null)
-  const [confirmError, setConfirmError] = useState('')
 
   const loadSummary = useCallback(
     () =>
@@ -77,19 +74,6 @@ export default function LCDashboard() {
     loadSummary()
   }
 
-  const confirmReceived = async (id) => {
-    setConfirming(id)
-    setConfirmError('')
-    try {
-      await inventoryService.markReceived(id)
-      await loadSummary()
-    } catch (err) {
-      setConfirmError(err?.message || 'Could not confirm the delivery.')
-    } finally {
-      setConfirming(null)
-    }
-  }
-
   const loading = summary === null
   const failed = summary === undefined
   const enrolled = (programs ?? []).reduce((sum, p) => sum + Number(p.enrollment_count || 0), 0)
@@ -110,9 +94,9 @@ export default function LCDashboard() {
               <Icon name="coins" size={16} />
               Request allowance
             </Button>
-            <Button to={ROUTES.CENTER.AVAILABLE_INVENTORY}>
+            <Button to={ROUTES.CENTER.NEW_INVENTORY_REQUEST}>
               <Icon name="plus" size={16} />
-              Request supplies
+              Request inventory
             </Button>
           </>
         }
@@ -139,8 +123,8 @@ export default function LCDashboard() {
         error={failed ? summaryError : ''}
         onRetry={retry}
         cells={[
-          { label: 'Deliveries to confirm', value: countOf(req, SUPPLY.onTheWay), detail: 'Released by the main office; confirm when received', attention: true },
-          { label: 'Supply requests in progress', value: countOf(req, [...SUPPLY.toReview, ...SUPPLY.toRelease]), detail: 'Waiting for review or release' },
+          { label: 'Deliveries to confirm', value: countOf(req, SUPPLY.onTheWay), detail: 'On the way or delivered; confirm receipt', attention: true, to: ROUTES.CENTER.INVENTORY_REQUESTS },
+          { label: 'Inventory requests in progress', value: countOf(req, [...SUPPLY.toReview, ...SUPPLY.toRelease]), detail: 'Waiting for approval or being prepared', to: ROUTES.CENTER.INVENTORY_REQUESTS },
           { label: 'Allowances in progress', value: countOf(alw, [...ALLOWANCE.toDecide, ...ALLOWANCE.toRelease]), detail: 'Waiting for a decision or release' },
           { label: 'Rejected requests', value: rejected, detail: 'Read the main office’s note before resending', attention: true },
         ]}
@@ -177,16 +161,11 @@ export default function LCDashboard() {
         <div className="stack">
           <section className="card">
             <div className="card-head">
-              <h2>Supply requests</h2>
-              <Link to={ROUTES.CENTER.AVAILABLE_INVENTORY}>
+              <h2>Inventory requests</h2>
+              <Link to={ROUTES.CENTER.NEW_INVENTORY_REQUEST}>
                 New request <Icon name="plus" size={15} />
               </Link>
             </div>
-            {confirmError && (
-              <p className="form-error" role="alert">
-                {confirmError}
-              </p>
-            )}
             {loading ? (
               <ListSkeleton />
             ) : failed ? (
@@ -195,18 +174,18 @@ export default function LCDashboard() {
               <ul className="list-rows">
                 {supplyRows.map((r) => (
                   <li key={r.id} className="list-row">
-                    <span>
+                    <Link to={toPath(ROUTES.CENTER.INVENTORY_REQUEST, { id: r.id })} className="list-link">
                       <strong>
-                        <span className="code">{r.request_code}</span> · {r.items_summary}
+                        <span className="code">{r.request_code.startsWith('DRAFT') ? 'Draft' : r.request_code}</span> · {r.items_summary}
                       </strong>
-                      <small>Sent {shortDate(r.created_at)}</small>
-                    </span>
-                    {r.status === 'released' ? (
-                      <Button variant="secondary" disabled={confirming === r.id} onClick={() => confirmReceived(r.id)}>
-                        {confirming === r.id ? 'Confirming…' : 'Confirm received'}
+                      <small>{r.submitted_at ? `Sent ${shortDate(r.submitted_at)}` : 'Not submitted yet'}</small>
+                    </Link>
+                    {['in_transit', 'delivered'].includes(r.status) ? (
+                      <Button variant="secondary" to={toPath(ROUTES.CENTER.INVENTORY_REQUEST, { id: r.id })}>
+                        Confirm receipt
                       </Button>
                     ) : (
-                      <StatusBadge status={r.status} />
+                      <StatusBadge status={r.status} label={REQUEST_STATUS_LABEL[r.status]} />
                     )}
                   </li>
                 ))}
